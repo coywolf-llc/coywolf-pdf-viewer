@@ -24,6 +24,10 @@
 			"type": "string",
 			"default": ""
 		},
+		"heightMode": {
+			"type": "string",
+			"default": ""
+		},
 		"height": {
 			"type": "number",
 			"default": 0

@@ -130,15 +130,19 @@ class Coywolf_CPV_Block {
 
 		$this->enqueue_view_assets();
 
+		$height_mode   = $this->resolve_height_mode( $attributes, $pdf );
 		$height        = $this->resolve_scalar( $attributes, $pdf, 'height' );
 		$theme         = $this->resolve_scalar( $attributes, $pdf, 'theme' );
 		$zoom          = $this->resolve_scalar( $attributes, $pdf, 'zoom' );
 		$click_to_load = $this->resolve_bool( $attributes, $pdf, 'clickToLoad', 'click_to_load' );
+		$ratio         = ! empty( $pdf['options']['ratio'] ) ? (float) $pdf['options']['ratio'] : 0;
 
 		$config = array(
 			'src'      => esc_url_raw( $src ),
 			'name'     => $pdf['name'],
 			'filename' => $this->store->filename( $pdf ),
+			'fit'      => $height_mode,
+			'ratio'    => $ratio,
 			'theme'    => $theme,
 			'accent'   => (string) $this->settings->get( 'accent_color' ),
 			'zoom'     => $zoom,
@@ -160,8 +164,19 @@ class Coywolf_CPV_Block {
 
 		$wrapper = get_block_wrapper_attributes( array( 'class' => 'coywolf-cpv' ) );
 
+		// Auto mode sizes the box to the page shape before any JS runs (the
+		// viewer chrome estimate; corrected to the pixel once the document
+		// loads), so the page never shows alongside its neighbor and the
+		// layout doesn't shift. Fixed mode keeps the explicit height.
+		if ( 'auto' === $height_mode ) {
+			$css_ratio = $ratio > 0 ? $ratio : 1.2941; // US Letter estimate.
+			$style     = 'aspect-ratio:1 / ' . $css_ratio . ';min-height:240px';
+		} else {
+			$style = 'height:' . (string) $height . 'px';
+		}
+
 		$html  = '<figure ' . $wrapper . '>';
-		$html .= '<div class="coywolf-cpv-embed" data-cpv="' . esc_attr( (string) wp_json_encode( $config ) ) . '" style="height:' . esc_attr( (string) $height ) . 'px">';
+		$html .= '<div class="coywolf-cpv-embed" data-cpv="' . esc_attr( (string) wp_json_encode( $config ) ) . '" style="' . esc_attr( $style ) . '">';
 		$html .= '<div class="coywolf-cpv-placeholder">';
 		$html .= '<span class="coywolf-cpv-placeholder-icon" aria-hidden="true"></span>';
 		$html .= '<span class="coywolf-cpv-placeholder-name">' . esc_html( $pdf['name'] ) . '</span>';
@@ -257,6 +272,23 @@ class Coywolf_CPV_Block {
 	/* --------------------------------------------------------------------- *
 	 * Inheritance
 	 * --------------------------------------------------------------------- */
+
+	/**
+	 * Resolve the height mode: block attribute → per-PDF option → setting.
+	 *
+	 * @param array $attributes Block attributes.
+	 * @param array $pdf        Hydrated PDF.
+	 * @return string auto|fixed
+	 */
+	private function resolve_height_mode( $attributes, $pdf ) {
+		if ( isset( $attributes['heightMode'] ) && in_array( $attributes['heightMode'], array( 'auto', 'fixed' ), true ) ) {
+			return $attributes['heightMode'];
+		}
+		if ( isset( $pdf['options']['height_mode'] ) && in_array( $pdf['options']['height_mode'], array( 'auto', 'fixed' ), true ) ) {
+			return $pdf['options']['height_mode'];
+		}
+		return 'fixed' === $this->settings->get( 'height_mode' ) ? 'fixed' : 'auto';
+	}
 
 	/**
 	 * Resolve a boolean option: block attribute → per-PDF option → setting.

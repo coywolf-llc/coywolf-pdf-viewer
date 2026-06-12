@@ -16,7 +16,7 @@ Coywolf PDF Viewer adds a PDF library to wp-admin and a **Coywolf PDF** block to
 
 * **All PDFs** — a standard WordPress table of every PDF with search, filtering, sorting, bulk actions, and pagination. The Posts and Pages columns show where each PDF is embedded and link straight to those filtered post lists.
 * **Add PDF** — upload a PDF to the Media Library (or pick an existing one), or serve one from an external URL. Give it a name, a caption, and per-PDF viewer options.
-* **Settings** — site-wide defaults for the viewer: height, light/dark/system color scheme, accent color, default zoom, and which toolbar features (Download, Print, Full screen, Sidebar, Search, Zoom) are available.
+* **Settings** — site-wide defaults for the viewer: height (fit one page automatically — the default — or a fixed pixel height), light/dark/system color scheme, accent color, default zoom, and which toolbar features (Download, Print, Full screen, Sidebar, Search, Zoom) are available.
 * **Documentation** — the full documentation, rendered inside wp-admin.
 
 In the editor, the block opens a picker modal listing all PDFs — type to filter, click to embed — or add a brand-new PDF without leaving the post. Every viewer option can be overridden per block, per PDF, or site-wide (block → PDF → Settings).
@@ -33,6 +33,10 @@ Deleting a PDF from the All PDFs table also removes its block from every post an
 = Privacy-first =
 
 Everything is served from your site: the viewer script, the PDF rendering engine, and (for Media Library PDFs) the documents themselves. The plugin makes **no third-party requests**, sets no cookies, and collects no data.
+
+= Fits one page at a time =
+
+By default each embed sizes itself to the PDF's page: the viewer height matches the page shape at the current width (toolbar included), so visitors see exactly one full page — not a page and a half — and scroll through page by page. The fit is rotation-aware, re-fits when pages in the document have different sizes, adapts on window resize, and the box is pre-sized before the viewer loads so the layout doesn't shift. Prefer the old behavior? Switch Height to a fixed pixel value in Settings, per PDF, or per block.
 
 = Nice extras =
 

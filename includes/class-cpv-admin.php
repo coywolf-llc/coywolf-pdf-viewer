@@ -360,14 +360,20 @@ class Coywolf_CPV_Admin {
 			echo '</select></td></tr>';
 		}
 
-		// Height.
+		// Height mode + fixed height.
+		$height_mode = isset( $values['options']['height_mode'] ) ? $values['options']['height_mode'] : '';
+		echo '<tr><td><label for="coywolf-cpv-opt-height-mode">' . esc_html__( 'Height', 'coywolf-pdf-viewer' ) . '</label></td><td>';
+		echo '<select name="cpv_options[height_mode]" id="coywolf-cpv-opt-height-mode">';
+		printf( '<option value=""%s>%s</option>', selected( $height_mode, '', false ), esc_html( $this->default_label( 'height_mode' ) ) );
+		printf( '<option value="auto"%s>%s</option>', selected( $height_mode, 'auto', false ), esc_html__( 'Fit one page', 'coywolf-pdf-viewer' ) );
+		printf( '<option value="fixed"%s>%s</option>', selected( $height_mode, 'fixed', false ), esc_html__( 'Fixed height', 'coywolf-pdf-viewer' ) );
+		echo '</select> ';
 		$height = isset( $values['options']['height'] ) ? (int) $values['options']['height'] : 0;
-		echo '<tr><td><label for="coywolf-cpv-opt-height">' . esc_html__( 'Height', 'coywolf-pdf-viewer' ) . '</label></td><td>';
 		printf(
 			'<input type="number" name="cpv_options[height]" id="coywolf-cpv-opt-height" class="small-text" min="0" max="3000" step="10" value="%s" placeholder="0" /> %s',
 			esc_attr( $height > 0 ? (string) $height : '' ),
 			/* translators: %d: the default viewer height from Settings. */
-			esc_html( sprintf( __( 'pixels — leave empty for the default (%d)', 'coywolf-pdf-viewer' ), (int) $this->settings->get( 'height' ) ) )
+			esc_html( sprintf( __( 'pixels — used with fixed height; empty for the default (%d)', 'coywolf-pdf-viewer' ), (int) $this->settings->get( 'height' ) ) )
 		);
 		echo '</td></tr>';
 
@@ -406,9 +412,15 @@ class Coywolf_CPV_Admin {
 	 * @return string
 	 */
 	private function default_label( $key ) {
-		$value = $this->settings->get( $key );
+		$value  = $this->settings->get( $key );
+		$labels = array(
+			'auto'  => __( 'Fit one page', 'coywolf-pdf-viewer' ),
+			'fixed' => __( 'Fixed height', 'coywolf-pdf-viewer' ),
+		);
 		if ( is_bool( $value ) ) {
 			$current = $value ? __( 'On', 'coywolf-pdf-viewer' ) : __( 'Off', 'coywolf-pdf-viewer' );
+		} elseif ( isset( $labels[ (string) $value ] ) ) {
+			$current = $labels[ (string) $value ];
 		} else {
 			$current = (string) $value;
 		}
