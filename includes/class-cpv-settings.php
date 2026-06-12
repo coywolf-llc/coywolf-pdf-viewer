@@ -88,7 +88,7 @@ class Coywolf_CPV_Settings {
 			'click_to_load'   => false,
 			// Click-to-load poster overlay.
 			'overlay_color'   => '#ffffff',
-			'overlay_opacity' => 25,
+			'overlay_opacity' => 75,
 			// Display.
 			'show_caption'    => true,
 			'schema_enabled'  => true,
@@ -173,11 +173,8 @@ class Coywolf_CPV_Settings {
 		$theme          = isset( $input['theme'] ) ? sanitize_key( $input['theme'] ) : '';
 		$clean['theme'] = in_array( $theme, array( 'light', 'dark', 'system' ), true ) ? $theme : $defaults['theme'];
 
-		// The "use viewer default" checkbox wins over the color input (a
-		// color input cannot submit an empty value).
-		$clean['accent_color'] = empty( $input['accent_default'] )
-			? $this->sanitize_hex( isset( $input['accent_color'] ) ? $input['accent_color'] : '' )
-			: '';
+		// Cleared in the picker = '' = use the viewer default.
+		$clean['accent_color'] = $this->sanitize_hex( isset( $input['accent_color'] ) ? $input['accent_color'] : '' );
 
 		$zoom          = isset( $input['zoom'] ) ? sanitize_key( $input['zoom'] ) : '';
 		$clean['zoom'] = in_array( $zoom, array( 'fit-page', 'fit-width', 'automatic' ), true ) ? $zoom : $defaults['zoom'];
@@ -255,17 +252,25 @@ class Coywolf_CPV_Settings {
 	}
 
 	/**
-	 * Accent color field.
+	 * Accent color field (a hidden value input + a jscolorpicker mount).
 	 */
 	public function render_accent_field() {
-		$value = (string) $this->get( 'accent_color' );
+		$this->color_input( 'accent_color' );
+		echo '<p class="description">' . esc_html__( 'Tints buttons, links, and highlights inside the viewer. Clear the color to use the viewer default.', 'coywolf-pdf-viewer' ) . '</p>';
+	}
+
+	/**
+	 * Render a color field (a hidden value input + a jscolorpicker mount
+	 * point — the same picker the Coywolf Video Manager settings use).
+	 *
+	 * @param string $key Setting key.
+	 */
+	private function color_input( $key ) {
 		printf(
-			'<input type="color" id="coywolf-cpv-accent" name="%1$s[accent_color]" value="%2$s" /> <label><input type="checkbox" name="%1$s[accent_default]" value="1"%3$s /> %4$s</label><p class="description">%5$s</p>',
+			'<span class="coywolf-cpv-color-field" data-key="%2$s"><input type="hidden" class="coywolf-cpv-color-value" name="%1$s[%2$s]" value="%3$s" /><span class="coywolf-cpv-color-mount"></span></span>',
 			esc_attr( self::OPTION ),
-			esc_attr( '' !== $value ? $value : '#2563eb' ),
-			checked( '' === $value, true, false ),
-			esc_html__( 'Use the viewer default', 'coywolf-pdf-viewer' ),
-			esc_html__( 'Tints buttons, links, and highlights inside the viewer.', 'coywolf-pdf-viewer' )
+			esc_attr( $key ),
+			esc_attr( (string) $this->get( $key ) )
 		);
 	}
 
@@ -337,11 +342,11 @@ class Coywolf_CPV_Settings {
 	 * Click-to-load overlay color + opacity.
 	 */
 	public function render_overlay_field() {
+		$this->color_input( 'overlay_color' );
 		printf(
-			'<input type="color" name="%1$s[overlay_color]" value="%2$s" /> %3$s <input type="number" name="%1$s[overlay_opacity]" value="%4$d" min="0" max="95" step="5" class="small-text" />%%<p class="description">%5$s</p>',
-			esc_attr( self::OPTION ),
-			esc_attr( (string) $this->get( 'overlay_color' ) ),
+			' %1$s <input type="number" name="%2$s[overlay_opacity]" value="%3$d" min="0" max="95" step="5" class="small-text" />%%<p class="description">%4$s</p>',
 			esc_html__( 'at', 'coywolf-pdf-viewer' ),
+			esc_attr( self::OPTION ),
 			(int) $this->get( 'overlay_opacity' ),
 			esc_html__( 'The tint laid over the poster image behind the Load PDF button. Each PDF can override it.', 'coywolf-pdf-viewer' )
 		);

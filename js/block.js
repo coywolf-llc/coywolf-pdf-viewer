@@ -563,7 +563,7 @@
 			),
 			el(
 				PanelBody,
-				{ title: __( 'Viewer', 'coywolf-pdf-viewer' ), initialOpen: false },
+				{ title: __( 'PDF Viewer', 'coywolf-pdf-viewer' ), initialOpen: false },
 				el( SelectControl, {
 					label: __( 'Height', 'coywolf-pdf-viewer' ),
 					value: a.heightMode || '',
