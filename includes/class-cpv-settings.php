@@ -71,24 +71,27 @@ class Coywolf_CPV_Settings {
 	public static function defaults() {
 		return array(
 			// Viewer.
-			'height_mode'    => 'auto',
-			'height'         => 800,
-			'theme'          => 'system',
-			'accent_color'   => '',
-			'zoom'           => 'fit-page',
+			'height_mode'     => 'auto',
+			'height'          => 800,
+			'theme'           => 'system',
+			'accent_color'    => '',
+			'zoom'            => 'fit-page',
 			// Toolbar features.
-			'download'       => true,
-			'print'          => true,
-			'fullscreen'     => true,
-			'sidebar'        => true,
-			'search'         => true,
-			'zoom_controls'  => true,
+			'download'        => true,
+			'print'           => true,
+			'fullscreen'      => true,
+			'sidebar'         => true,
+			'search'          => true,
+			'zoom_controls'   => true,
 			// Performance.
-			'lazy'           => true,
-			'click_to_load'  => false,
+			'lazy'            => true,
+			'click_to_load'   => false,
+			// Click-to-load poster overlay.
+			'overlay_color'   => '#ffffff',
+			'overlay_opacity' => 25,
 			// Display.
-			'show_caption'   => true,
-			'schema_enabled' => true,
+			'show_caption'    => true,
+			'schema_enabled'  => true,
 		);
 	}
 
@@ -145,6 +148,7 @@ class Coywolf_CPV_Settings {
 
 		add_settings_section( 'coywolf_cpv_performance', __( 'Performance', 'coywolf-pdf-viewer' ), '__return_false', self::PAGE );
 		add_settings_field( 'performance', __( 'Loading', 'coywolf-pdf-viewer' ), array( $this, 'render_performance_field' ), self::PAGE, 'coywolf_cpv_performance' );
+		add_settings_field( 'overlay', __( 'Click-to-load overlay', 'coywolf-pdf-viewer' ), array( $this, 'render_overlay_field' ), self::PAGE, 'coywolf_cpv_performance' );
 
 		add_settings_section( 'coywolf_cpv_display', __( 'Display', 'coywolf-pdf-viewer' ), '__return_false', self::PAGE );
 		add_settings_field( 'display', __( 'Captions & SEO', 'coywolf-pdf-viewer' ), array( $this, 'render_display_field' ), self::PAGE, 'coywolf_cpv_display' );
@@ -181,6 +185,13 @@ class Coywolf_CPV_Settings {
 		foreach ( array( 'download', 'print', 'fullscreen', 'sidebar', 'search', 'zoom_controls', 'lazy', 'click_to_load', 'show_caption', 'schema_enabled' ) as $key ) {
 			$clean[ $key ] = ! empty( $input[ $key ] );
 		}
+
+		$overlay                = isset( $input['overlay_color'] ) ? sanitize_hex_color( (string) $input['overlay_color'] ) : '';
+		$clean['overlay_color'] = $overlay ? $overlay : $defaults['overlay_color'];
+
+		$clean['overlay_opacity'] = isset( $input['overlay_opacity'] ) && is_numeric( $input['overlay_opacity'] )
+			? min( 95, max( 0, (int) $input['overlay_opacity'] ) )
+			: $defaults['overlay_opacity'];
 
 		return $clean;
 	}
@@ -320,6 +331,20 @@ class Coywolf_CPV_Settings {
 			esc_html__( 'Show a lightweight preview card and load the viewer only when the visitor asks for it. The fastest option for pages with many PDFs.', 'coywolf-pdf-viewer' )
 		);
 		echo '</fieldset>';
+	}
+
+	/**
+	 * Click-to-load overlay color + opacity.
+	 */
+	public function render_overlay_field() {
+		printf(
+			'<input type="color" name="%1$s[overlay_color]" value="%2$s" /> %3$s <input type="number" name="%1$s[overlay_opacity]" value="%4$d" min="0" max="95" step="5" class="small-text" />%%<p class="description">%5$s</p>',
+			esc_attr( self::OPTION ),
+			esc_attr( (string) $this->get( 'overlay_color' ) ),
+			esc_html__( 'at', 'coywolf-pdf-viewer' ),
+			(int) $this->get( 'overlay_opacity' ),
+			esc_html__( 'The tint laid over the poster image behind the Load PDF button. Each PDF can override it.', 'coywolf-pdf-viewer' )
+		);
 	}
 
 	/**

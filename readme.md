@@ -39,6 +39,8 @@ By default each embed sizes itself to the PDF's page: the viewer height matches 
 
 ### Nice extras
 
+- Download and Full screen appear as always-visible toolbar icons (when enabled) instead of hiding inside the viewer menu.
+- Per-PDF page layout: two-page spreads and vertical or horizontal scrolling.
 - Optional schema.org `DigitalDocument` structured data for each embed.
 - A plain download link inside every embed for no-JavaScript visitors, feed readers, and crawlers.
 - The viewer UI follows your site language (10 locales built in).

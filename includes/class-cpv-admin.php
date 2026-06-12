@@ -372,7 +372,35 @@ class Coywolf_CPV_Admin {
 		echo '<input type="hidden" name="cpv_options[poster_id]" class="coywolf-cpv-poster-id" value="' . esc_attr( (string) $poster_id ) . '" />';
 		echo '<div class="coywolf-cpv-poster-preview">' . ( $poster_url ? '<img src="' . esc_url( $poster_url ) . '" alt="" />' : '' ) . '</div>';
 		echo '<p class="description">' . esc_html__( 'Shown behind the Load PDF button in click-to-load mode. Media Library PDFs fall back to their generated first-page preview automatically.', 'coywolf-pdf-viewer' ) . '</p>';
+		$known_ratio = isset( $values['options']['ratio'] ) ? (float) $values['options']['ratio'] : 0;
+		if ( $known_ratio > 0 ) {
+			printf(
+				'<p class="description"><strong>%s</strong> 1200 × %dpx</p>',
+				esc_html__( 'Recommended size (matches the PDF page):', 'coywolf-pdf-viewer' ),
+				(int) round( 1200 * $known_ratio )
+			);
+		} else {
+			echo '<p class="description"><strong>' . esc_html__( 'Recommended width:', 'coywolf-pdf-viewer' ) . '</strong> 1200px</p>';
+		}
 		echo '</div>';
+		echo '</td></tr>';
+
+		// Click-to-load overlay (tint over the poster).
+		$overlay_color   = isset( $values['options']['overlay_color'] ) ? (string) $values['options']['overlay_color'] : '';
+		$overlay_opacity = isset( $values['options']['overlay_opacity'] ) ? $values['options']['overlay_opacity'] : '';
+		echo '<tr><td><label for="coywolf-cpv-opt-overlay-color">' . esc_html__( 'Click-to-load overlay', 'coywolf-pdf-viewer' ) . '</label></td><td>';
+		printf(
+			'<input type="color" name="cpv_options[overlay_color]" id="coywolf-cpv-opt-overlay-color" value="%1$s" /> <label><input type="checkbox" name="cpv_options[overlay_default]" value="1"%2$s /> %3$s</label> ',
+			esc_attr( '' !== $overlay_color ? $overlay_color : (string) $this->settings->get( 'overlay_color' ) ),
+			checked( '' === $overlay_color, true, false ),
+			esc_html__( 'Default color', 'coywolf-pdf-viewer' )
+		);
+		printf(
+			'<input type="number" name="cpv_options[overlay_opacity]" class="small-text" min="0" max="95" step="5" value="%1$s" placeholder="%2$d" />%% <span class="description">%3$s</span>',
+			esc_attr( '' !== $overlay_opacity ? (string) (int) $overlay_opacity : '' ),
+			(int) $this->settings->get( 'overlay_opacity' ),
+			esc_html__( 'opacity — empty for the default', 'coywolf-pdf-viewer' )
+		);
 		echo '</td></tr>';
 
 		// Height mode + fixed height.
@@ -410,6 +438,25 @@ class Coywolf_CPV_Admin {
 		printf( '<option value="fit-page"%s>%s</option>', selected( $zoom, 'fit-page', false ), esc_html__( 'Fit page', 'coywolf-pdf-viewer' ) );
 		printf( '<option value="fit-width"%s>%s</option>', selected( $zoom, 'fit-width', false ), esc_html__( 'Fit width', 'coywolf-pdf-viewer' ) );
 		printf( '<option value="automatic"%s>%s</option>', selected( $zoom, 'automatic', false ), esc_html__( 'Automatic', 'coywolf-pdf-viewer' ) );
+		echo '</select></td></tr>';
+
+		// Spread mode.
+		$spread = isset( $values['options']['spread'] ) ? $values['options']['spread'] : '';
+		echo '<tr><td><label for="coywolf-cpv-opt-spread">' . esc_html__( 'Spread mode', 'coywolf-pdf-viewer' ) . '</label></td><td>';
+		echo '<select name="cpv_options[spread]" id="coywolf-cpv-opt-spread">';
+		printf( '<option value=""%s>%s</option>', selected( $spread, '', false ), esc_html__( 'Default (single pages)', 'coywolf-pdf-viewer' ) );
+		printf( '<option value="none"%s>%s</option>', selected( $spread, 'none', false ), esc_html__( 'Single pages', 'coywolf-pdf-viewer' ) );
+		printf( '<option value="odd"%s>%s</option>', selected( $spread, 'odd', false ), esc_html__( 'Two-page spread (odd pages left)', 'coywolf-pdf-viewer' ) );
+		printf( '<option value="even"%s>%s</option>', selected( $spread, 'even', false ), esc_html__( 'Two-page spread (even pages left)', 'coywolf-pdf-viewer' ) );
+		echo '</select></td></tr>';
+
+		// Scroll layout.
+		$scroll = isset( $values['options']['scroll'] ) ? $values['options']['scroll'] : '';
+		echo '<tr><td><label for="coywolf-cpv-opt-scroll">' . esc_html__( 'Scroll layout', 'coywolf-pdf-viewer' ) . '</label></td><td>';
+		echo '<select name="cpv_options[scroll]" id="coywolf-cpv-opt-scroll">';
+		printf( '<option value=""%s>%s</option>', selected( $scroll, '', false ), esc_html__( 'Default (vertical)', 'coywolf-pdf-viewer' ) );
+		printf( '<option value="vertical"%s>%s</option>', selected( $scroll, 'vertical', false ), esc_html__( 'Vertical', 'coywolf-pdf-viewer' ) );
+		printf( '<option value="horizontal"%s>%s</option>', selected( $scroll, 'horizontal', false ), esc_html__( 'Horizontal', 'coywolf-pdf-viewer' ) );
 		echo '</select></td></tr>';
 
 		echo '</table>';
@@ -461,6 +508,13 @@ class Coywolf_CPV_Admin {
 			'url'           => isset( $_POST['cpv_url'] ) ? esc_url_raw( wp_unslash( $_POST['cpv_url'] ) ) : '',
 			'options'       => isset( $_POST['cpv_options'] ) && is_array( $_POST['cpv_options'] ) ? map_deep( wp_unslash( $_POST['cpv_options'] ), 'sanitize_text_field' ) : array(),
 		);
+
+		// The "default color" checkbox wins over the color input (a color
+		// input cannot submit an empty value).
+		if ( ! empty( $data['options']['overlay_default'] ) ) {
+			$data['options']['overlay_color'] = '';
+		}
+		unset( $data['options']['overlay_default'] );
 
 		// Validate the source.
 		$error = '';

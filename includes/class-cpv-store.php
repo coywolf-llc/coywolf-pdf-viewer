@@ -78,6 +78,13 @@ class Coywolf_CPV_Store {
 		$options['height']      = 0;
 		$options['theme']       = '';
 		$options['zoom']        = '';
+		// Page layout: '' inherits the viewer defaults (single pages,
+		// vertical scrolling).
+		$options['spread'] = '';
+		$options['scroll'] = '';
+		// Click-to-load overlay: '' inherits the Settings defaults.
+		$options['overlay_color']   = '';
+		$options['overlay_opacity'] = '';
 		// Detected page aspect ratio (height/width), 0 = unknown. Internal;
 		// the front end uses it to size auto-height embeds before the viewer
 		// loads and corrects it.
@@ -444,6 +451,21 @@ class Coywolf_CPV_Store {
 		}
 		if ( isset( $options['zoom'] ) && in_array( $options['zoom'], array( 'fit-page', 'fit-width', 'automatic' ), true ) ) {
 			$clean['zoom'] = $options['zoom'];
+		}
+		if ( isset( $options['spread'] ) && in_array( $options['spread'], array( 'none', 'odd', 'even' ), true ) ) {
+			$clean['spread'] = $options['spread'];
+		}
+		if ( isset( $options['scroll'] ) && in_array( $options['scroll'], array( 'vertical', 'horizontal' ), true ) ) {
+			$clean['scroll'] = $options['scroll'];
+		}
+		if ( isset( $options['overlay_color'] ) && '' !== $options['overlay_color'] ) {
+			$hex = sanitize_hex_color( (string) $options['overlay_color'] );
+			if ( $hex ) {
+				$clean['overlay_color'] = $hex;
+			}
+		}
+		if ( isset( $options['overlay_opacity'] ) && '' !== $options['overlay_opacity'] && is_numeric( $options['overlay_opacity'] ) ) {
+			$clean['overlay_opacity'] = min( 95, max( 0, (int) $options['overlay_opacity'] ) );
 		}
 		if ( isset( $options['ratio'] ) && is_numeric( $options['ratio'] ) && (float) $options['ratio'] > 0.05 && (float) $options['ratio'] < 20 ) {
 			$clean['ratio'] = round( (float) $options['ratio'], 4 );

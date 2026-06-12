@@ -31,8 +31,20 @@
 		return modes.FitPage;
 	}
 
-	// The snippet build's default viewport padding (viewportGap).
+	// The snippet build's default viewport padding (viewportGap) and gap
+	// between pages in a spread (pageGap).
 	var VIEWPORT_GAP = 10;
+	var PAGE_GAP = 10;
+
+	// The width one page column gets inside the viewport: in a two-page
+	// spread the pages share the row (minus the gap between them).
+	function pageColumnWidth( width, cfg ) {
+		var available = width - 2 * VIEWPORT_GAP;
+		if ( 'odd' === cfg.spread || 'even' === cfg.spread ) {
+			return ( available - PAGE_GAP ) / 2;
+		}
+		return available;
+	}
 
 	// Estimated viewer chrome (toolbar) height, used to pre-size auto-height
 	// placeholders so loading the viewer doesn't shift the layout. The
@@ -49,7 +61,7 @@
 		if ( ! width || ! cfg.ratio ) {
 			return;
 		}
-		var px = Math.ceil( CHROME_ESTIMATE + 2 * VIEWPORT_GAP + cfg.ratio * ( width - 2 * VIEWPORT_GAP ) );
+		var px = Math.ceil( CHROME_ESTIMATE + 2 * VIEWPORT_GAP + cfg.ratio * pageColumnWidth( width, cfg ) );
 		if ( embed.style.height !== px + 'px' ) {
 			embed.style.aspectRatio = 'auto';
 			embed.style.height = px + 'px';
@@ -85,7 +97,7 @@
 	 * scroll viewport height. Re-applies whenever the viewport resizes —
 	 * the re-apply converges because the setter is value-idempotent.
 	 */
-	function autoFit( embed, viewer ) {
+	function autoFit( embed, viewer, cfg ) {
 		viewer.registry.then( function ( registry ) {
 			var dmPlugin = registry.getPlugin( 'document-manager' );
 			var vpPlugin = registry.getPlugin( 'viewport' );
@@ -128,7 +140,7 @@
 					return;
 				}
 				var chrome = embed.getBoundingClientRect().height - metrics.clientHeight;
-				var pageWidth = metrics.clientWidth - 2 * VIEWPORT_GAP;
+				var pageWidth = pageColumnWidth( metrics.clientWidth, cfg );
 				if ( chrome < 0 || pageWidth <= 0 ) {
 					return;
 				}
@@ -226,6 +238,86 @@
 		return disabled;
 	}
 
+	/**
+	 * Surface Download and Full screen as always-visible toolbar icons
+	 * (they ship buried in the hamburger menu). Re-uses the built-in
+	 * document:export / document:fullscreen commands, so the icons, F11
+	 * shortcut, and active-state styling all come from the viewer itself;
+	 * the surfaced entries are removed from the menu to avoid duplicates.
+	 * Must run right after registry resolves — the toolbar reads the schema
+	 * when the document UI mounts.
+	 */
+	function surfaceToolbarButtons( viewer, cfg ) {
+		viewer.registry.then( function ( registry ) {
+			var uiPlugin = registry.getPlugin( 'ui' );
+			var features = cfg.features || {};
+			if ( ! uiPlugin || ( ! features.download && ! features.fullscreen ) ) {
+				return;
+			}
+			var ui = uiPlugin.provides();
+			var schema = ui.getSchema();
+			var toolbar = schema.toolbars && schema.toolbars[ 'main-toolbar' ];
+			if ( ! toolbar || ! toolbar.items ) {
+				return;
+			}
+			var items = JSON.parse( JSON.stringify( toolbar.items ) );
+			var right = null;
+			for ( var i = 0; i < items.length; i++ ) {
+				if ( 'right-group' === items[ i ].id ) {
+					right = items[ i ];
+				}
+			}
+			if ( ! right || ! right.items ) {
+				return;
+			}
+
+			var surfaced = [];
+			if ( features.download ) {
+				right.items.push( {
+					type: 'command-button',
+					id: 'coywolf-cpv-download',
+					commandId: 'document:export',
+					variant: 'icon',
+					categories: [ 'document', 'document-export' ]
+				} );
+				surfaced.push( 'document:export' );
+			}
+			if ( features.fullscreen ) {
+				right.items.push( {
+					type: 'command-button',
+					id: 'coywolf-cpv-fullscreen',
+					commandId: 'document:fullscreen',
+					variant: 'icon',
+					categories: [ 'document', 'document-fullscreen' ]
+				} );
+				surfaced.push( 'document:fullscreen' );
+				// The divider sits directly above the fullscreen menu entry;
+				// removing the entry would leave it dangling.
+				surfaced.push( 'divider-11' );
+			}
+
+			var merge = { toolbars: {} };
+			// mergeSchema replaces a toolbar's whole items array, so always
+			// pass the full (cloned + extended) list.
+			merge.toolbars[ 'main-toolbar' ] = items.length ? Object.assign( {}, toolbar, { items: items } ) : toolbar;
+
+			var menu = schema.menus && schema.menus[ 'document-menu' ];
+			if ( menu && menu.items ) {
+				merge.menus = {
+					'document-menu': Object.assign( {}, menu, {
+						items: menu.items.filter( function ( item ) {
+							return -1 === surfaced.indexOf( item.id );
+						} )
+					} )
+				};
+			}
+
+			ui.mergeSchema( merge );
+		} ).catch( function () {
+			// The stock toolbar (with the menu entries) keeps working.
+		} );
+	}
+
 	function boot( embed, cfg ) {
 		if ( embed.getAttribute( 'data-cpv-loaded' ) ) {
 			return;
@@ -263,10 +355,22 @@
 			if ( cfg.features && ! cfg.features.print ) {
 				init.permissions = { overrides: { print: false } };
 			}
+			if ( 'horizontal' === cfg.scrollDir ) {
+				init.scroll = { defaultStrategy: 'horizontal' };
+			}
+			if ( 'odd' === cfg.spread || 'even' === cfg.spread ) {
+				var spreads = mod.SpreadMode || {};
+				init.spread = {
+					defaultSpreadMode: 'odd' === cfg.spread ? ( spreads.Odd || 'odd' ) : ( spreads.Even || 'even' )
+				};
+			}
 
 			var viewer = EmbedPDF.init( init );
-			if ( fitting && viewer && viewer.registry ) {
-				autoFit( embed, viewer );
+			if ( viewer && viewer.registry ) {
+				surfaceToolbarButtons( viewer, cfg );
+				if ( fitting ) {
+					autoFit( embed, viewer, cfg );
+				}
 			}
 			embed.classList.remove( 'coywolf-cpv-loading' );
 		} ).catch( function () {
