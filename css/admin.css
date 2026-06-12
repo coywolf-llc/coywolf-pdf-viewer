@@ -27,6 +27,20 @@
 	vertical-align: middle;
 }
 
+/* Side-by-side controls (select + number input + trailing text) sit on one
+   visual line at the same height on the Settings and Add/Edit screens. */
+.coywolf-cpv-settings .form-table td select,
+.coywolf-cpv-settings .form-table td input[type="number"],
+.coywolf-cpv-add select,
+.coywolf-cpv-add input[type="number"] {
+	height: 30px;
+	margin-top: 0;
+	margin-bottom: 0;
+	margin-right: 6px;
+	vertical-align: middle;
+	box-sizing: border-box;
+}
+
 .coywolf-cpv-add .coywolf-cpv-poster-preview img {
 	max-width: 200px;
 	height: auto;
