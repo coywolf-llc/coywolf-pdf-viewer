@@ -8,7 +8,47 @@
 	var cfg = window.coywolfCPVAdmin || { i18n: {} };
 	var frame = null;
 
+	// jscolorpicker (the same picker Coywolf Video Manager bundles) on the
+	// Settings and Add/Edit PDF screens. Clearing the swatch submits '',
+	// which means "use the default".
+	function initColorPickers() {
+		if ( 'undefined' === typeof window.ColorPicker ) {
+			return;
+		}
+		var fields = document.querySelectorAll( '.coywolf-cpv-color-field' );
+		Array.prototype.forEach.call( fields, function ( field ) {
+			var hidden = field.querySelector( '.coywolf-cpv-color-value' );
+			var mount = field.querySelector( '.coywolf-cpv-color-mount' );
+			if ( ! hidden || ! mount ) {
+				return;
+			}
+			var picker = new window.ColorPicker( mount, {
+				color: hidden.value || null,
+				submitMode: 'instant',
+				enableAlpha: false,
+				formats: [ 'hex' ],
+				defaultFormat: 'hex',
+				showClearButton: true
+			} );
+			picker.on( 'pick', function ( color ) {
+				var hex = '';
+				if ( color ) {
+					hex = color.string( 'hex' );
+					if ( hex && '#' !== hex.charAt( 0 ) ) {
+						hex = '#' + hex;
+					}
+					if ( hex.length > 7 ) {
+						hex = hex.substring( 0, 7 ); // drop any alpha.
+					}
+				}
+				hidden.value = hex;
+			} );
+		} );
+	}
+
 	$( function () {
+		initColorPickers();
+
 		// Source radio toggles the Media Library / URL inputs.
 		$( '.coywolf-cpv-source input[type="radio"]' ).on( 'change', function () {
 			var media = 'media' === $( this ).val();

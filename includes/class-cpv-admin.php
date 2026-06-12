@@ -141,7 +141,16 @@ class Coywolf_CPV_Admin {
 			return;
 		}
 		wp_enqueue_style( 'coywolf-cpv-admin', COYWOLF_CPV_URL . 'css/admin.css', array(), Coywolf_PDF_Viewer::VERSION );
-		wp_enqueue_script( 'coywolf-cpv-admin', COYWOLF_CPV_URL . 'js/admin.js', array( 'jquery' ), Coywolf_PDF_Viewer::VERSION, true );
+
+		// The Settings and Add/Edit screens pick colors with the bundled
+		// jscolorpicker (the same picker Coywolf Video Manager uses).
+		$deps = array( 'jquery' );
+		if ( in_array( $hook, array( $this->hooks['settings'], $this->hooks['add'] ), true ) ) {
+			wp_enqueue_style( 'coywolf-cpv-jscolorpicker', COYWOLF_CPV_URL . 'vendor/jscolorpicker/colorpicker.min.css', array(), '1.1.0' );
+			wp_enqueue_script( 'coywolf-cpv-jscolorpicker', COYWOLF_CPV_URL . 'vendor/jscolorpicker/colorpicker.iife.min.js', array(), '1.1.0', true );
+			$deps[] = 'coywolf-cpv-jscolorpicker';
+		}
+		wp_enqueue_script( 'coywolf-cpv-admin', COYWOLF_CPV_URL . 'js/admin.js', $deps, Coywolf_PDF_Viewer::VERSION, true );
 		wp_add_inline_script(
 			'coywolf-cpv-admin',
 			'window.coywolfCPVAdmin = ' . wp_json_encode(
@@ -388,18 +397,16 @@ class Coywolf_CPV_Admin {
 		// Click-to-load overlay (tint over the poster).
 		$overlay_color   = isset( $values['options']['overlay_color'] ) ? (string) $values['options']['overlay_color'] : '';
 		$overlay_opacity = isset( $values['options']['overlay_opacity'] ) ? $values['options']['overlay_opacity'] : '';
-		echo '<tr><td><label for="coywolf-cpv-opt-overlay-color">' . esc_html__( 'Click-to-load overlay', 'coywolf-pdf-viewer' ) . '</label></td><td>';
+		echo '<tr><td><label>' . esc_html__( 'Click-to-load overlay', 'coywolf-pdf-viewer' ) . '</label></td><td>';
 		printf(
-			'<input type="color" name="cpv_options[overlay_color]" id="coywolf-cpv-opt-overlay-color" value="%1$s" /> <label><input type="checkbox" name="cpv_options[overlay_default]" value="1"%2$s /> %3$s</label> ',
-			esc_attr( '' !== $overlay_color ? $overlay_color : (string) $this->settings->get( 'overlay_color' ) ),
-			checked( '' === $overlay_color, true, false ),
-			esc_html__( 'Default color', 'coywolf-pdf-viewer' )
+			'<span class="coywolf-cpv-color-field" data-key="overlay_color"><input type="hidden" class="coywolf-cpv-color-value" name="cpv_options[overlay_color]" value="%s" /><span class="coywolf-cpv-color-mount"></span></span> ',
+			esc_attr( $overlay_color )
 		);
 		printf(
 			'<input type="number" name="cpv_options[overlay_opacity]" class="small-text" min="0" max="95" step="5" value="%1$s" placeholder="%2$d" />%% <span class="description">%3$s</span>',
 			esc_attr( '' !== $overlay_opacity ? (string) (int) $overlay_opacity : '' ),
 			(int) $this->settings->get( 'overlay_opacity' ),
-			esc_html__( 'opacity — empty for the default', 'coywolf-pdf-viewer' )
+			esc_html__( 'Clear the color / empty opacity to use the Settings defaults.', 'coywolf-pdf-viewer' )
 		);
 		echo '</td></tr>';
 
@@ -509,12 +516,6 @@ class Coywolf_CPV_Admin {
 			'options'       => isset( $_POST['cpv_options'] ) && is_array( $_POST['cpv_options'] ) ? map_deep( wp_unslash( $_POST['cpv_options'] ), 'sanitize_text_field' ) : array(),
 		);
 
-		// The "default color" checkbox wins over the color input (a color
-		// input cannot submit an empty value).
-		if ( ! empty( $data['options']['overlay_default'] ) ) {
-			$data['options']['overlay_color'] = '';
-		}
-		unset( $data['options']['overlay_default'] );
 
 		// Validate the source.
 		$error = '';

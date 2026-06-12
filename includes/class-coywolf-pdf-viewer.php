@@ -109,10 +109,23 @@ class Coywolf_PDF_Viewer {
 	 * ratio detection existed, so auto-height placeholders match the page.
 	 */
 	public function maybe_upgrade() {
-		if ( get_option( 'coywolf_cpv_version' ) === self::VERSION ) {
+		$stored = (string) get_option( 'coywolf_cpv_version' );
+		if ( self::VERSION === $stored ) {
 			return;
 		}
 		$this->store->backfill_ratios();
+
+		// 1.0.4: the click-to-load overlay default moved from 25% to 75%.
+		// Carry along installs still holding the old seeded default (a
+		// deliberate non-25 choice is left alone).
+		if ( $stored && version_compare( $stored, '1.0.4', '<' ) ) {
+			$settings = get_option( Coywolf_CPV_Settings::OPTION );
+			if ( is_array( $settings ) && isset( $settings['overlay_opacity'] ) && 25 === (int) $settings['overlay_opacity'] ) {
+				$settings['overlay_opacity'] = 75;
+				update_option( Coywolf_CPV_Settings::OPTION, $settings );
+			}
+		}
+
 		update_option( 'coywolf_cpv_version', self::VERSION );
 	}
 
