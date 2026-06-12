@@ -30,8 +30,9 @@
 	text-align: center;
 }
 
-/* Click-to-load poster: the first page (or a chosen image) fills the card,
-   dimmed so the Load button stays the focal point — like a video facade. */
+/* Click-to-load poster: the first page (or a chosen image) fills the card
+   under a configurable tint, so the Load button stays the focal point —
+   like a video facade. */
 .coywolf-cpv-poster {
 	position: absolute;
 	inset: 0;
@@ -39,8 +40,12 @@
 	height: 100%;
 	object-fit: cover;
 	object-position: top center;
-	opacity: 0.4;
 	margin: 0;
+}
+
+.coywolf-cpv-overlay {
+	position: absolute;
+	inset: 0;
 }
 
 .coywolf-cpv-has-poster .coywolf-cpv-placeholder-icon {

@@ -148,17 +148,19 @@ class Coywolf_CPV_Block {
 		}
 
 		$config = array(
-			'src'      => esc_url_raw( $src ),
-			'name'     => $pdf['name'],
-			'filename' => $this->store->filename( $pdf ),
-			'fit'      => $height_mode,
-			'ratio'    => $ratio,
-			'theme'    => $theme,
-			'accent'   => (string) $this->settings->get( 'accent_color' ),
-			'zoom'     => $zoom,
-			'lazy'     => (bool) $this->settings->get( 'lazy' ),
-			'click'    => $click_to_load,
-			'features' => array(
+			'src'       => esc_url_raw( $src ),
+			'name'      => $pdf['name'],
+			'filename'  => $this->store->filename( $pdf ),
+			'fit'       => $height_mode,
+			'ratio'     => $ratio,
+			'theme'     => $theme,
+			'accent'    => (string) $this->settings->get( 'accent_color' ),
+			'zoom'      => $zoom,
+			'spread'    => ! empty( $pdf['options']['spread'] ) ? $pdf['options']['spread'] : 'none',
+			'scrollDir' => ! empty( $pdf['options']['scroll'] ) ? $pdf['options']['scroll'] : 'vertical',
+			'lazy'      => (bool) $this->settings->get( 'lazy' ),
+			'click'     => $click_to_load,
+			'features'  => array(
 				'download'   => $this->resolve_bool( $attributes, $pdf, 'download', 'download' ),
 				'print'      => $this->resolve_bool( $attributes, $pdf, 'print', 'print' ),
 				'fullscreen' => $this->resolve_bool( $attributes, $pdf, 'fullscreen', 'fullscreen' ),
@@ -190,13 +192,18 @@ class Coywolf_CPV_Block {
 		$html .= '<div class="coywolf-cpv-placeholder' . ( '' !== $poster['url'] ? ' coywolf-cpv-has-poster' : '' ) . '">';
 		if ( '' !== $poster['url'] ) {
 			$html .= '<img class="coywolf-cpv-poster" src="' . esc_url( $poster['url'] ) . '" alt="" loading="lazy" decoding="async" />';
+			$html .= '<span class="coywolf-cpv-overlay" style="background-color:' . esc_attr( $this->overlay_rgba( $pdf ) ) . '" aria-hidden="true"></span>';
 		}
 		$html .= '<span class="coywolf-cpv-placeholder-icon" aria-hidden="true"></span>';
 		$html .= '<span class="coywolf-cpv-placeholder-name">' . esc_html( $pdf['name'] ) . '</span>';
 		if ( $click_to_load ) {
+			// Click-to-load shows only the name and the Load button; the
+			// direct link stays available for no-JavaScript visitors.
 			$html .= '<button type="button" class="coywolf-cpv-load">' . esc_html__( 'Load PDF', 'coywolf-pdf-viewer' ) . '</button>';
+			$html .= '<noscript><a class="coywolf-cpv-fallback" href="' . esc_url( $src ) . '">' . esc_html__( 'Open the PDF', 'coywolf-pdf-viewer' ) . '</a></noscript>';
+		} else {
+			$html .= '<a class="coywolf-cpv-fallback" href="' . esc_url( $src ) . '">' . esc_html__( 'Open the PDF', 'coywolf-pdf-viewer' ) . '</a>';
 		}
-		$html .= '<a class="coywolf-cpv-fallback" href="' . esc_url( $src ) . '">' . esc_html__( 'Open the PDF', 'coywolf-pdf-viewer' ) . '</a>';
 		$html .= '</div>';
 		$html .= '</div>';
 		if ( $show_caption && '' !== trim( $pdf['caption'] ) ) {
@@ -285,6 +292,35 @@ class Coywolf_CPV_Block {
 	/* --------------------------------------------------------------------- *
 	 * Inheritance
 	 * --------------------------------------------------------------------- */
+
+	/**
+	 * The click-to-load overlay tint as an rgba() color: per-PDF override
+	 * over the Settings default.
+	 *
+	 * @param array $pdf Hydrated PDF.
+	 * @return string
+	 */
+	private function overlay_rgba( $pdf ) {
+		$color = ! empty( $pdf['options']['overlay_color'] ) ? $pdf['options']['overlay_color'] : (string) $this->settings->get( 'overlay_color' );
+		$alpha = ( isset( $pdf['options']['overlay_opacity'] ) && '' !== $pdf['options']['overlay_opacity'] )
+			? (int) $pdf['options']['overlay_opacity']
+			: (int) $this->settings->get( 'overlay_opacity' );
+
+		$hex = ltrim( (string) sanitize_hex_color( $color ), '#' );
+		if ( 3 === strlen( $hex ) ) {
+			$hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
+		}
+		if ( 6 !== strlen( $hex ) ) {
+			$hex = 'ffffff';
+		}
+		return sprintf(
+			'rgba(%d, %d, %d, %s)',
+			hexdec( substr( $hex, 0, 2 ) ),
+			hexdec( substr( $hex, 2, 2 ) ),
+			hexdec( substr( $hex, 4, 2 ) ),
+			(string) ( min( 95, max( 0, $alpha ) ) / 100 )
+		);
+	}
 
 	/**
 	 * Resolve the height mode: block attribute → per-PDF option → setting.
