@@ -1,0 +1,103 @@
+/* Coywolf PDF Viewer — front-end styles. */
+
+.coywolf-cpv {
+	margin: 0 0 1.5em;
+}
+
+.coywolf-cpv-embed {
+	position: relative;
+	overflow: hidden;
+	border: 1px solid rgba( 0, 0, 0, 0.12 );
+	border-radius: 6px;
+	background: #f6f7f8;
+}
+
+/* The viewer fills the sized container (EmbedPDF collapses without an
+   explicit height). */
+.coywolf-cpv-viewer {
+	height: 100%;
+}
+
+.coywolf-cpv-placeholder {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 12px;
+	padding: 24px;
+	text-align: center;
+}
+
+.coywolf-cpv-placeholder-icon {
+	width: 48px;
+	height: 60px;
+	border: 2px solid rgba( 0, 0, 0, 0.25 );
+	border-radius: 4px;
+	position: relative;
+}
+
+.coywolf-cpv-placeholder-icon::after {
+	content: "PDF";
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font: 700 11px/1 system-ui, sans-serif;
+	color: rgba( 0, 0, 0, 0.45 );
+}
+
+.coywolf-cpv-placeholder-name {
+	font-weight: 600;
+	max-width: 100%;
+	overflow-wrap: anywhere;
+}
+
+.coywolf-cpv-load {
+	cursor: pointer;
+	padding: 8px 18px;
+	border: 0;
+	border-radius: 4px;
+	background: #2563eb;
+	color: #fff;
+	font-size: 0.95em;
+}
+
+.coywolf-cpv-load:hover,
+.coywolf-cpv-load:focus {
+	background: #1d4ed8;
+	color: #fff;
+}
+
+.coywolf-cpv-fallback {
+	font-size: 0.85em;
+}
+
+/* Once the viewer boots, the placeholder is replaced; while the module
+   downloads, dim it slightly. */
+.coywolf-cpv-loading .coywolf-cpv-placeholder {
+	opacity: 0.6;
+}
+
+.coywolf-cpv-caption {
+	margin-top: 0.6em;
+	font-size: 0.85em;
+	color: #606060;
+}
+
+@media (prefers-color-scheme: dark) {
+	.coywolf-cpv-embed {
+		background: #1f2226;
+		border-color: rgba( 255, 255, 255, 0.14 );
+	}
+
+	.coywolf-cpv-placeholder-icon {
+		border-color: rgba( 255, 255, 255, 0.35 );
+	}
+
+	.coywolf-cpv-placeholder-icon::after {
+		color: rgba( 255, 255, 255, 0.55 );
+	}
+}

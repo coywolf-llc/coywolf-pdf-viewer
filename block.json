@@ -1,0 +1,50 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "coywolf/pdf",
+	"title": "Coywolf PDF",
+	"category": "media",
+	"description": "Embed a PDF with a fast, self-hosted viewer.",
+	"keywords": [ "pdf", "document", "embed", "viewer" ],
+	"textdomain": "coywolf-pdf-viewer",
+	"supports": {
+		"html": false,
+		"align": [ "wide", "full" ]
+	},
+	"attributes": {
+		"pdfId": {
+			"type": "number",
+			"default": 0
+		},
+		"pdfName": {
+			"type": "string",
+			"default": ""
+		},
+		"pdfUrl": {
+			"type": "string",
+			"default": ""
+		},
+		"height": {
+			"type": "number",
+			"default": 0
+		},
+		"theme": {
+			"type": "string",
+			"default": ""
+		},
+		"zoom": {
+			"type": "string",
+			"default": ""
+		},
+		"download": { "type": "boolean" },
+		"print": { "type": "boolean" },
+		"fullscreen": { "type": "boolean" },
+		"sidebar": { "type": "boolean" },
+		"search": { "type": "boolean" },
+		"zoomControls": { "type": "boolean" },
+		"clickToLoad": { "type": "boolean" },
+		"showCaption": { "type": "boolean" }
+	},
+	"editorScript": "coywolf-cpv-block",
+	"editorStyle": "coywolf-cpv-block-editor"
+}
