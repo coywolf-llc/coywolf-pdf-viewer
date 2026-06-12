@@ -1,0 +1,32 @@
+/* Coywolf PDF Viewer — admin screens. */
+
+.coywolf-cpv-add .coywolf-cpv-source {
+	margin-bottom: 12px;
+}
+
+.coywolf-cpv-add .coywolf-cpv-source label {
+	display: inline-block;
+	margin-bottom: 6px;
+}
+
+.coywolf-cpv-add .coywolf-cpv-picked {
+	font-style: italic;
+	color: #50575e;
+}
+
+.coywolf-cpv-add .coywolf-cpv-options td {
+	padding: 4px 16px 4px 0;
+}
+
+.coywolf-cpv-add .coywolf-cpv-options label {
+	font-weight: 400;
+}
+
+.coywolf-cpv-list .coywolf-cpv-missing {
+	color: #b32d2e;
+}
+
+.coywolf-cpv-settings .form-table label {
+	margin-bottom: 4px;
+	display: inline-block;
+}
