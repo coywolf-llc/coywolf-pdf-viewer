@@ -27,7 +27,7 @@ Deleting a PDF from the All PDFs table also removes its block from every post an
 
 * The viewer engine (EmbedPDF, bundled locally) loads **only on pages that contain the block** — zero scripts anywhere else.
 * Embeds are **lazy-loaded**: the viewer module and the PDF download only when the embed scrolls near the screen.
-* Optional **click-to-load** mode shows a lightweight preview card and loads the viewer only on demand — ideal for pages with several PDFs.
+* Optional **click-to-load** mode shows a lightweight, page-shaped preview card — with a poster image behind the Load button, like a video facade — and loads the viewer only on demand, with no layout shift. Choose a poster per PDF, or let Media Library PDFs use their generated first-page preview automatically.
 * The viewer renders in a shadow DOM, so theme CSS can't break it (and vice versa).
 
 = Privacy-first =

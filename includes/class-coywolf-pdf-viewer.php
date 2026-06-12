@@ -99,6 +99,21 @@ class Coywolf_PDF_Viewer {
 		$this->rest     = new Coywolf_CPV_REST( $this->store, $this->settings );
 		$this->block    = new Coywolf_CPV_Block( $this->store, $this->settings );
 		$this->admin    = new Coywolf_CPV_Admin( $this->store, $this->index, $this->settings );
+
+		add_action( 'admin_init', array( $this, 'maybe_upgrade' ) );
+	}
+
+	/**
+	 * One-shot per-version upgrade routines (admin only, never on the front
+	 * end). Currently: backfill detected page ratios for PDFs saved before
+	 * ratio detection existed, so auto-height placeholders match the page.
+	 */
+	public function maybe_upgrade() {
+		if ( get_option( 'coywolf_cpv_version' ) === self::VERSION ) {
+			return;
+		}
+		$this->store->backfill_ratios();
+		update_option( 'coywolf_cpv_version', self::VERSION );
 	}
 
 	/**

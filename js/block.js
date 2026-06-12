@@ -103,6 +103,9 @@
 		var optionsState = useState( {} );
 		var options = optionsState[ 0 ];
 		var setOptions = optionsState[ 1 ];
+		var posterState = useState( null );
+		var poster = posterState[ 0 ];
+		var setPoster = posterState[ 1 ];
 		var savingState = useState( false );
 		var saving = savingState[ 0 ];
 		var setSaving = savingState[ 1 ];
@@ -143,17 +146,21 @@
 				return;
 			}
 			setSaving( true );
+			var data = {
+				name: name,
+				caption: caption,
+				source: source,
+				attachment_id: media ? media.id : 0,
+				url: url,
+				options: options
+			};
+			if ( poster ) {
+				data.options = Object.assign( {}, options, { poster_id: poster.id } );
+			}
 			apiFetch( {
 				path: '/coywolf-cpv/v1/pdfs',
 				method: 'POST',
-				data: {
-					name: name,
-					caption: caption,
-					source: source,
-					attachment_id: media ? media.id : 0,
-					url: url,
-					options: options
-				}
+				data: data
 			} ).then( function ( pdf ) {
 				setSaving( false );
 				props.onCreated( pdf );
@@ -222,6 +229,23 @@
 					__nextHasNoMarginBottom: true,
 					onChange: setUrl
 				} ),
+			el(
+				MediaUploadCheck,
+				{},
+				el( MediaUpload, {
+					allowedTypes: [ 'image' ],
+					value: poster ? poster.id : undefined,
+					onSelect: setPoster,
+					render: function ( o ) {
+						return el(
+							'div',
+							{ className: 'coywolf-cpv-addform-media' },
+							el( Button, { variant: 'tertiary', onClick: o.open }, poster ? __( 'Change poster image', 'coywolf-pdf-viewer' ) : __( 'Poster image (optional)', 'coywolf-pdf-viewer' ) ),
+							poster ? el( 'span', { className: 'coywolf-cpv-addform-file' }, poster.filename || poster.title || '' ) : null
+						);
+					}
+				} )
+			),
 			el(
 				'details',
 				{ className: 'coywolf-cpv-addform-options' },
