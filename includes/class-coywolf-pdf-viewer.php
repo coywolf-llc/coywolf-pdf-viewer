@@ -21,7 +21,7 @@ class Coywolf_PDF_Viewer {
 	 * Plugin version (kept in sync with the main file header by the release
 	 * workflow).
 	 */
-	const VERSION = '1.0.5';
+	const VERSION = '1.0.6';
 
 	/**
 	 * Capability gating the admin screens, granted to administrators.

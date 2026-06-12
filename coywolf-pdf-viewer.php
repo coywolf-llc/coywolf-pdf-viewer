@@ -3,7 +3,7 @@
  * Plugin Name:       Coywolf PDF Viewer
  * Plugin URI:        https://coywolf.com/notes/coywolf-pdf-viewer/
  * Description:       Embed and view PDFs on posts and pages with a fast, self-hosted viewer. Manage PDFs from the Media Library or external URLs and embed them with the Coywolf PDF block.
- * Version:           1.0.5
+ * Version:           1.0.6
  * Requires at least: 6.3
  * Requires PHP:      7.4
  * Author:            Coywolf
