@@ -16,7 +16,7 @@ Coywolf PDF Viewer adds a PDF library to wp-admin and a **Coywolf PDF** block to
 
 * **All PDFs** — a standard WordPress table of every PDF with search, filtering, sorting, bulk actions, and pagination. The Posts and Pages columns show where each PDF is embedded and link straight to those filtered post lists.
 * **Add PDF** — upload a PDF to the Media Library (or pick an existing one), or serve one from an external URL. Give it a name, a caption, and per-PDF viewer options.
-* **Settings** — site-wide defaults for the viewer: height (fit one page automatically — the default — or a fixed pixel height), light/dark/system color scheme, accent color, default zoom, and which toolbar features (Download, Print, Full screen, Sidebar, Search, Zoom) are available.
+* **Settings** — site-wide defaults for the viewer: height (fit one page automatically — the default — or a fixed pixel height), light/dark/system color scheme, accent color, default zoom, and which toolbar features (Download, Print, Full screen, Sidebar, Search, Zoom) are available. There's also a scroll-margin-top option (rem or px) for sites with a fixed/sticky header, so anchor targets aren't hidden behind it.
 * **Documentation** — the full documentation, rendered inside wp-admin.
 
 In the editor, the block opens a picker modal listing all PDFs — type to filter, click to embed — or add a brand-new PDF without leaving the post. Every viewer option can be overridden per block, per PDF, or site-wide (block → PDF → Settings).

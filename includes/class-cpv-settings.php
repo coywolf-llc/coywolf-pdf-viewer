@@ -45,6 +45,7 @@ class Coywolf_CPV_Settings {
 	 */
 	public function __construct() {
 		add_action( 'admin_init', array( $this, 'register' ) );
+		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scroll_margin_style' ) );
 
 		// Drop the per-request settings cache when the option changes.
 		add_action( 'update_option_' . self::OPTION, array( $this, 'flush_cache' ) );
@@ -71,28 +72,69 @@ class Coywolf_CPV_Settings {
 	public static function defaults() {
 		return array(
 			// Viewer.
-			'height_mode'     => 'auto',
-			'height'          => 800,
-			'theme'           => 'system',
-			'accent_color'    => '',
-			'zoom'            => 'fit-page',
+			'height_mode'        => 'auto',
+			'height'             => 800,
+			'theme'              => 'system',
+			'accent_color'       => '',
+			'zoom'               => 'fit-page',
 			// Toolbar features.
-			'download'        => true,
-			'print'           => true,
-			'fullscreen'      => true,
-			'sidebar'         => true,
-			'search'          => true,
-			'zoom_controls'   => true,
+			'download'           => true,
+			'print'              => true,
+			'fullscreen'         => true,
+			'sidebar'            => true,
+			'search'             => true,
+			'zoom_controls'      => true,
 			// Performance.
-			'lazy'            => true,
-			'click_to_load'   => false,
+			'lazy'               => true,
+			'click_to_load'      => false,
 			// Click-to-load poster overlay.
-			'overlay_color'   => '#ffffff',
-			'overlay_opacity' => 75,
+			'overlay_color'      => '#ffffff',
+			'overlay_opacity'    => 75,
 			// Display.
-			'show_caption'    => true,
-			'schema_enabled'  => true,
+			'show_caption'       => true,
+			'schema_enabled'     => true,
+			// Anchor offset for sites with a fixed/sticky header: > 0 emits
+			// [id] { scroll-margin-top: <value><unit> } on the front end.
+			'scroll_margin_top'  => 0,
+			'scroll_margin_unit' => 'rem',
 		);
+	}
+
+	/* --------------------------------------------------------------------- *
+	 * Front-end scroll margin
+	 * --------------------------------------------------------------------- */
+
+	/**
+	 * When a scroll margin is configured, offset every anchor target so a
+	 * fixed/sticky header doesn't cover it. Printed via an inline style on a
+	 * src-less handle (no raw style tags).
+	 */
+	public function enqueue_scroll_margin_style() {
+		$css = $this->scroll_margin_css();
+		if ( '' === $css ) {
+			return;
+		}
+		wp_register_style( 'coywolf-cpv-scroll-margin', false, array(), Coywolf_PDF_Viewer::VERSION );
+		wp_enqueue_style( 'coywolf-cpv-scroll-margin' );
+		wp_add_inline_style( 'coywolf-cpv-scroll-margin', $css );
+	}
+
+	/**
+	 * The scroll-margin rule, or '' when disabled (0).
+	 *
+	 * @return string
+	 */
+	public function scroll_margin_css() {
+		$value = (float) $this->get( 'scroll_margin_top' );
+		if ( $value <= 0 ) {
+			return '';
+		}
+		$unit = 'px' === $this->get( 'scroll_margin_unit' ) ? 'px' : 'rem';
+
+		// 4 -> "4", 4.50 -> "4.5" (the value is sanitized to a bounded float,
+		// so the rule is built only from numbers and a whitelisted unit).
+		$number = rtrim( rtrim( number_format( $value, 3, '.', '' ), '0' ), '.' );
+		return '[id]{scroll-margin-top:' . $number . $unit . '}';
 	}
 
 	/**
@@ -152,6 +194,7 @@ class Coywolf_CPV_Settings {
 
 		add_settings_section( 'coywolf_cpv_display', __( 'Display', 'coywolf-pdf-viewer' ), '__return_false', self::PAGE );
 		add_settings_field( 'display', __( 'Captions & SEO', 'coywolf-pdf-viewer' ), array( $this, 'render_display_field' ), self::PAGE, 'coywolf_cpv_display' );
+		add_settings_field( 'scroll_margin', __( 'Scroll margin top', 'coywolf-pdf-viewer' ), array( $this, 'render_scroll_margin_field' ), self::PAGE, 'coywolf_cpv_display' );
 	}
 
 	/**
@@ -189,6 +232,13 @@ class Coywolf_CPV_Settings {
 		$clean['overlay_opacity'] = isset( $input['overlay_opacity'] ) && is_numeric( $input['overlay_opacity'] )
 			? min( 95, max( 0, (int) $input['overlay_opacity'] ) )
 			: $defaults['overlay_opacity'];
+
+		$clean['scroll_margin_top'] = isset( $input['scroll_margin_top'] ) && is_numeric( $input['scroll_margin_top'] )
+			? min( 1000, max( 0, round( (float) $input['scroll_margin_top'], 3 ) ) )
+			: $defaults['scroll_margin_top'];
+
+		$unit                        = isset( $input['scroll_margin_unit'] ) ? sanitize_key( $input['scroll_margin_unit'] ) : '';
+		$clean['scroll_margin_unit'] = in_array( $unit, array( 'rem', 'px' ), true ) ? $unit : $defaults['scroll_margin_unit'];
 
 		return $clean;
 	}
@@ -371,6 +421,24 @@ class Coywolf_CPV_Settings {
 			esc_html__( 'Helps search engines understand the document attached to the page.', 'coywolf-pdf-viewer' )
 		);
 		echo '</fieldset>';
+	}
+
+	/**
+	 * Scroll margin top: value + unit.
+	 */
+	public function render_scroll_margin_field() {
+		$value = (float) $this->get( 'scroll_margin_top' );
+		$unit  = 'px' === $this->get( 'scroll_margin_unit' ) ? 'px' : 'rem';
+		printf(
+			'<input type="number" name="%1$s[scroll_margin_top]" value="%2$s" min="0" max="1000" step="0.25" class="small-text" /> ',
+			esc_attr( self::OPTION ),
+			esc_attr( $value > 0 ? rtrim( rtrim( number_format( $value, 3, '.', '' ), '0' ), '.' ) : '0' )
+		);
+		echo '<select name="' . esc_attr( self::OPTION ) . '[scroll_margin_unit]">';
+		printf( '<option value="rem"%s>rem</option>', selected( $unit, 'rem', false ) );
+		printf( '<option value="px"%s>px</option>', selected( $unit, 'px', false ) );
+		echo '</select>';
+		echo '<p class="description">' . esc_html__( 'For sites with a fixed or sticky header: offsets anchor targets so they aren’t hidden behind it when the page scrolls to a link. 0 turns it off; e.g. 4rem outputs [id] { scroll-margin-top: 4rem; } site-wide.', 'coywolf-pdf-viewer' ) . '</p>';
 	}
 
 	/* --------------------------------------------------------------------- *
