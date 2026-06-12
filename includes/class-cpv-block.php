@@ -135,7 +135,17 @@ class Coywolf_CPV_Block {
 		$theme         = $this->resolve_scalar( $attributes, $pdf, 'theme' );
 		$zoom          = $this->resolve_scalar( $attributes, $pdf, 'zoom' );
 		$click_to_load = $this->resolve_bool( $attributes, $pdf, 'clickToLoad', 'click_to_load' );
+		$poster        = $click_to_load ? $this->store->poster( $pdf ) : array(
+			'url'   => '',
+			'ratio' => 0,
+		);
 		$ratio         = ! empty( $pdf['options']['ratio'] ) ? (float) $pdf['options']['ratio'] : 0;
+
+		// A poster rendered from the first page carries the page shape — use
+		// it when the PDF itself hasn't been measured.
+		if ( $ratio <= 0 && $poster['ratio'] > 0 ) {
+			$ratio = $poster['ratio'];
+		}
 
 		$config = array(
 			'src'      => esc_url_raw( $src ),
@@ -177,7 +187,10 @@ class Coywolf_CPV_Block {
 
 		$html  = '<figure ' . $wrapper . '>';
 		$html .= '<div class="coywolf-cpv-embed" data-cpv="' . esc_attr( (string) wp_json_encode( $config ) ) . '" style="' . esc_attr( $style ) . '">';
-		$html .= '<div class="coywolf-cpv-placeholder">';
+		$html .= '<div class="coywolf-cpv-placeholder' . ( '' !== $poster['url'] ? ' coywolf-cpv-has-poster' : '' ) . '">';
+		if ( '' !== $poster['url'] ) {
+			$html .= '<img class="coywolf-cpv-poster" src="' . esc_url( $poster['url'] ) . '" alt="" loading="lazy" decoding="async" />';
+		}
 		$html .= '<span class="coywolf-cpv-placeholder-icon" aria-hidden="true"></span>';
 		$html .= '<span class="coywolf-cpv-placeholder-name">' . esc_html( $pdf['name'] ) . '</span>';
 		if ( $click_to_load ) {

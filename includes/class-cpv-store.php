@@ -82,7 +82,43 @@ class Coywolf_CPV_Store {
 		// the front end uses it to size auto-height embeds before the viewer
 		// loads and corrects it.
 		$options['ratio'] = 0;
+		// Poster image (attachment ID) for the click-to-load card. 0 = none;
+		// Media Library PDFs fall back to WordPress's generated first-page
+		// preview image.
+		$options['poster_id'] = 0;
 		return $options;
+	}
+
+	/**
+	 * The poster image URL for the click-to-load card, with its aspect
+	 * ratio: the chosen poster image, else the attachment's generated
+	 * first-page preview (Media Library PDFs with Imagick).
+	 *
+	 * @param array $pdf Hydrated PDF.
+	 * @return array { url: string, ratio: float } url '' when none.
+	 */
+	public function poster( $pdf ) {
+		$candidates = array();
+		if ( ! empty( $pdf['options']['poster_id'] ) ) {
+			$candidates[] = (int) $pdf['options']['poster_id'];
+		}
+		if ( 'media' === $pdf['source'] && $pdf['attachment_id'] > 0 ) {
+			$candidates[] = (int) $pdf['attachment_id'];
+		}
+		foreach ( $candidates as $attachment_id ) {
+			$image = wp_get_attachment_image_src( $attachment_id, 'large' );
+			if ( is_array( $image ) && ! empty( $image[0] ) ) {
+				$ratio = ( ! empty( $image[1] ) && ! empty( $image[2] ) ) ? $this->ratio_from( (float) $image[1], (float) $image[2] ) : 0;
+				return array(
+					'url'   => (string) $image[0],
+					'ratio' => $ratio,
+				);
+			}
+		}
+		return array(
+			'url'   => '',
+			'ratio' => 0,
+		);
 	}
 
 	/**
@@ -412,6 +448,31 @@ class Coywolf_CPV_Store {
 		if ( isset( $options['ratio'] ) && is_numeric( $options['ratio'] ) && (float) $options['ratio'] > 0.05 && (float) $options['ratio'] < 20 ) {
 			$clean['ratio'] = round( (float) $options['ratio'], 4 );
 		}
+		if ( isset( $options['poster_id'] ) ) {
+			$clean['poster_id'] = absint( $options['poster_id'] );
+		}
 		return $clean;
+	}
+
+	/**
+	 * Backfill missing page ratios (rows created before ratio detection).
+	 * Bounded so an upgrade never stalls the admin.
+	 *
+	 * @param int $limit Max rows to process.
+	 */
+	public function backfill_ratios( $limit = 50 ) {
+		$done = 0;
+		foreach ( $this->all() as $pdf ) {
+			if ( ! empty( $pdf['options']['ratio'] ) ) {
+				continue;
+			}
+			$ratio = $this->detect_ratio( $pdf );
+			if ( $ratio > 0 ) {
+				$this->update( $pdf['id'], array( 'options' => array( 'ratio' => $ratio ) ) );
+			}
+			if ( ++$done >= $limit ) {
+				break;
+			}
+		}
 	}
 }

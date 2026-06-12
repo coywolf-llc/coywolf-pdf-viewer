@@ -30,6 +30,36 @@
 	text-align: center;
 }
 
+/* Click-to-load poster: the first page (or a chosen image) fills the card,
+   dimmed so the Load button stays the focal point — like a video facade. */
+.coywolf-cpv-poster {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	object-position: top center;
+	opacity: 0.4;
+	margin: 0;
+}
+
+.coywolf-cpv-has-poster .coywolf-cpv-placeholder-icon {
+	display: none;
+}
+
+.coywolf-cpv-has-poster .coywolf-cpv-placeholder-name,
+.coywolf-cpv-has-poster .coywolf-cpv-fallback {
+	position: relative;
+	background: rgba( 255, 255, 255, 0.82 );
+	padding: 3px 10px;
+	border-radius: 4px;
+}
+
+.coywolf-cpv-has-poster .coywolf-cpv-load {
+	position: relative;
+	box-shadow: 0 2px 10px rgba( 0, 0, 0, 0.35 );
+}
+
 .coywolf-cpv-placeholder-icon {
 	width: 48px;
 	height: 60px;
@@ -91,6 +121,11 @@
 	.coywolf-cpv-embed {
 		background: #1f2226;
 		border-color: rgba( 255, 255, 255, 0.14 );
+	}
+
+	.coywolf-cpv-has-poster .coywolf-cpv-placeholder-name,
+	.coywolf-cpv-has-poster .coywolf-cpv-fallback {
+		background: rgba( 0, 0, 0, 0.65 );
 	}
 
 	.coywolf-cpv-placeholder-icon {

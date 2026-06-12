@@ -42,6 +42,39 @@
 			frame.open();
 		} );
 
+		// Poster image picker (click-to-load card).
+		var posterFrame = null;
+		$( '.coywolf-cpv-pick-poster' ).on( 'click', function ( event ) {
+			event.preventDefault();
+			if ( ! window.wp || ! window.wp.media ) {
+				return;
+			}
+			if ( ! posterFrame ) {
+				posterFrame = window.wp.media( {
+					title: cfg.i18n.choosePoster || 'Choose a poster image',
+					button: { text: cfg.i18n.usePoster || 'Use this image' },
+					library: { type: 'image' },
+					multiple: false
+				} );
+				posterFrame.on( 'select', function () {
+					var attachment = posterFrame.state().get( 'selection' ).first().toJSON();
+					var thumb = attachment.sizes && ( attachment.sizes.medium || attachment.sizes.full );
+					$( '.coywolf-cpv-poster-id' ).val( attachment.id );
+					$( '.coywolf-cpv-poster-preview' ).html(
+						$( '<img>', { src: thumb ? thumb.url : attachment.url, alt: '' } )
+					);
+					$( '.coywolf-cpv-clear-poster' ).show();
+				} );
+			}
+			posterFrame.open();
+		} );
+		$( '.coywolf-cpv-clear-poster' ).on( 'click', function ( event ) {
+			event.preventDefault();
+			$( '.coywolf-cpv-poster-id' ).val( '0' );
+			$( '.coywolf-cpv-poster-preview' ).empty();
+			$( this ).hide();
+		} );
+
 		// Deleting a PDF also strips its block from content — confirm first.
 		$( document ).on( 'click', '.coywolf-cpv-delete', function ( event ) {
 			if ( ! window.confirm( cfg.i18n.confirmDelete || 'Delete this PDF?' ) ) {

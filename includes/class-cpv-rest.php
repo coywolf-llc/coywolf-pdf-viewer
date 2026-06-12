@@ -222,6 +222,7 @@ class Coywolf_CPV_REST {
 	 * @return array
 	 */
 	private function shape( $pdf ) {
+		$poster = $this->store->poster( $pdf );
 		return array(
 			'id'            => $pdf['id'],
 			'name'          => $pdf['name'],
@@ -229,6 +230,7 @@ class Coywolf_CPV_REST {
 			'source'        => $pdf['source'],
 			'attachment_id' => $pdf['attachment_id'],
 			'url'           => $this->store->src( $pdf ),
+			'poster'        => $poster['url'],
 			'options'       => $pdf['options'],
 			'created'       => $pdf['created'],
 		);

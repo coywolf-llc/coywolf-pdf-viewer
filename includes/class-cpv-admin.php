@@ -149,6 +149,8 @@ class Coywolf_CPV_Admin {
 					'i18n' => array(
 						'choosePdf'     => __( 'Choose a PDF', 'coywolf-pdf-viewer' ),
 						'usePdf'        => __( 'Use this PDF', 'coywolf-pdf-viewer' ),
+						'choosePoster'  => __( 'Choose a poster image', 'coywolf-pdf-viewer' ),
+						'usePoster'     => __( 'Use this image', 'coywolf-pdf-viewer' ),
 						'confirmDelete' => __( 'Delete this PDF? Its block will also be removed from every post and page that embeds it.', 'coywolf-pdf-viewer' ),
 					),
 				)
@@ -359,6 +361,19 @@ class Coywolf_CPV_Admin {
 			printf( '<option value="off"%s>%s</option>', selected( $current, 'off', false ), esc_html__( 'Off', 'coywolf-pdf-viewer' ) );
 			echo '</select></td></tr>';
 		}
+
+		// Poster image (click-to-load card).
+		$poster_id  = isset( $values['options']['poster_id'] ) ? (int) $values['options']['poster_id'] : 0;
+		$poster_url = $poster_id ? wp_get_attachment_image_url( $poster_id, 'medium' ) : '';
+		echo '<tr><td><label>' . esc_html__( 'Poster image', 'coywolf-pdf-viewer' ) . '</label></td><td>';
+		echo '<div class="coywolf-cpv-poster-field">';
+		echo '<button type="button" class="button coywolf-cpv-pick-poster">' . esc_html__( 'Choose image', 'coywolf-pdf-viewer' ) . '</button> ';
+		echo '<button type="button" class="button coywolf-cpv-clear-poster"' . ( $poster_id ? '' : ' style="display:none"' ) . '>' . esc_html__( 'Remove', 'coywolf-pdf-viewer' ) . '</button>';
+		echo '<input type="hidden" name="cpv_options[poster_id]" class="coywolf-cpv-poster-id" value="' . esc_attr( (string) $poster_id ) . '" />';
+		echo '<div class="coywolf-cpv-poster-preview">' . ( $poster_url ? '<img src="' . esc_url( $poster_url ) . '" alt="" />' : '' ) . '</div>';
+		echo '<p class="description">' . esc_html__( 'Shown behind the Load PDF button in click-to-load mode. Media Library PDFs fall back to their generated first-page preview automatically.', 'coywolf-pdf-viewer' ) . '</p>';
+		echo '</div>';
+		echo '</td></tr>';
 
 		// Height mode + fixed height.
 		$height_mode = isset( $values['options']['height_mode'] ) ? $values['options']['height_mode'] : '';

@@ -34,6 +34,49 @@
 	// The snippet build's default viewport padding (viewportGap).
 	var VIEWPORT_GAP = 10;
 
+	// Estimated viewer chrome (toolbar) height, used to pre-size auto-height
+	// placeholders so loading the viewer doesn't shift the layout. The
+	// post-load fit measures the real value and corrects any residue.
+	var CHROME_ESTIMATE = 50;
+
+	// Auto-height embeds that haven't booted yet: keep their placeholder
+	// height matched to the page shape as the window resizes.
+	var pending = [];
+	var resizeQueued = false;
+
+	function presize( embed, cfg ) {
+		var width = embed.clientWidth;
+		if ( ! width || ! cfg.ratio ) {
+			return;
+		}
+		var px = Math.ceil( CHROME_ESTIMATE + 2 * VIEWPORT_GAP + cfg.ratio * ( width - 2 * VIEWPORT_GAP ) );
+		if ( embed.style.height !== px + 'px' ) {
+			embed.style.aspectRatio = 'auto';
+			embed.style.height = px + 'px';
+		}
+	}
+
+	function watchPending( embed, cfg ) {
+		presize( embed, cfg );
+		pending.push( { embed: embed, cfg: cfg } );
+		if ( 1 === pending.length ) {
+			window.addEventListener( 'resize', function () {
+				if ( resizeQueued ) {
+					return;
+				}
+				resizeQueued = true;
+				window.requestAnimationFrame( function () {
+					resizeQueued = false;
+					for ( var i = 0; i < pending.length; i++ ) {
+						if ( ! pending[ i ].embed.getAttribute( 'data-cpv-loaded' ) ) {
+							presize( pending[ i ].embed, pending[ i ].cfg );
+						}
+					}
+				} );
+			} );
+		}
+	}
+
 	/**
 	 * Auto height: size the embed so exactly one page fits. The page's
 	 * aspect ratio comes from the loaded document (rotation-corrected, and
@@ -242,6 +285,12 @@
 		}
 		if ( ! cfg.src || ! global.lib ) {
 			return;
+		}
+
+		// Match the placeholder to the future viewer height (page + chrome)
+		// before anything loads, so booting the viewer doesn't shift layout.
+		if ( 'auto' === cfg.fit ) {
+			watchPending( embed, cfg );
 		}
 
 		if ( cfg.click ) {

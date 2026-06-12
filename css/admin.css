@@ -22,6 +22,15 @@
 	font-weight: 400;
 }
 
+.coywolf-cpv-add .coywolf-cpv-poster-preview img {
+	max-width: 200px;
+	height: auto;
+	margin-top: 8px;
+	border: 1px solid #ddd;
+	border-radius: 4px;
+	display: block;
+}
+
 .coywolf-cpv-list .coywolf-cpv-missing {
 	color: #b32d2e;
 }
