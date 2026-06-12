@@ -4,7 +4,7 @@ Tags: pdf, pdf viewer, embed pdf, documents, pdf block
 Requires at least: 6.3
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.0.0
+Stable tag: 1.0.1
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -78,6 +78,9 @@ All modern browsers (Chrome, Edge, Firefox, Safari). The viewer uses WebAssembly
 This plugin phones no home. It bundles the MIT-licensed EmbedPDF viewer (https://github.com/embedpdf/embed-pdf-viewer), which uses Google's BSD-licensed PDFium engine compiled to WebAssembly, and serves it from your own site. If you embed a PDF from an external URL, your visitors' browsers request that file from the external host when the viewer loads.
 
 == Changelog ==
+
+= 1.0.1 =
+* Viewer: auto-fit height to one PDF page (new default) (#2).
 
 = 1.0.0 =
 * Initial release: PDF library (All PDFs, Add PDF, Settings, Documentation), the Coywolf PDF block with picker and in-editor add, per-block/per-PDF/site-wide option inheritance, lazy-loaded self-hosted EmbedPDF viewer, click-to-load mode, usage tracking with filtered post lists, block scrubbing on delete, and schema.org structured data.
