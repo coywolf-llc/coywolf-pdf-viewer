@@ -71,6 +71,7 @@ class Coywolf_CPV_Settings {
 	public static function defaults() {
 		return array(
 			// Viewer.
+			'height_mode'    => 'auto',
 			'height'         => 800,
 			'theme'          => 'system',
 			'accent_color'   => '',
@@ -160,6 +161,9 @@ class Coywolf_CPV_Settings {
 		$defaults = self::defaults();
 		$clean    = array();
 
+		$height_mode          = isset( $input['height_mode'] ) ? sanitize_key( $input['height_mode'] ) : '';
+		$clean['height_mode'] = in_array( $height_mode, array( 'auto', 'fixed' ), true ) ? $height_mode : $defaults['height_mode'];
+
 		$clean['height'] = isset( $input['height'] ) ? min( 3000, max( 200, absint( $input['height'] ) ) ) : $defaults['height'];
 
 		$theme          = isset( $input['theme'] ) ? sanitize_key( $input['theme'] ) : '';
@@ -204,16 +208,22 @@ class Coywolf_CPV_Settings {
 	}
 
 	/**
-	 * Height field.
+	 * Height field: fit-one-page (auto) or fixed pixels.
 	 */
 	public function render_height_field() {
+		$mode  = (string) $this->get( 'height_mode' );
 		$value = (int) $this->get( 'height' );
+		echo '<select name="' . esc_attr( self::OPTION ) . '[height_mode]">';
+		printf( '<option value="auto"%s>%s</option>', selected( $mode, 'auto', false ), esc_html__( 'Fit one page (recommended)', 'coywolf-pdf-viewer' ) );
+		printf( '<option value="fixed"%s>%s</option>', selected( $mode, 'fixed', false ), esc_html__( 'Fixed height', 'coywolf-pdf-viewer' ) );
+		echo '</select> ';
 		printf(
 			'<input type="number" name="%s[height]" value="%d" min="200" max="3000" step="10" class="small-text" /> %s',
 			esc_attr( self::OPTION ),
 			esc_attr( $value ),
-			esc_html__( 'pixels', 'coywolf-pdf-viewer' )
+			esc_html__( 'pixels (used with fixed height)', 'coywolf-pdf-viewer' )
 		);
+		echo '<p class="description">' . esc_html__( 'Fit one page sizes each embed to the PDF’s page, so exactly one page shows at a time.', 'coywolf-pdf-viewer' ) . '</p>';
 	}
 
 	/**

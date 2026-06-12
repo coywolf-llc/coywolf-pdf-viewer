@@ -540,19 +540,35 @@
 			el(
 				PanelBody,
 				{ title: __( 'Viewer', 'coywolf-pdf-viewer' ), initialOpen: false },
-				el( RangeControl, {
-					label: __( 'Height (px)', 'coywolf-pdf-viewer' ),
-					value: a.height || ( pdf && pdf.options && pdf.options.height ? pdf.options.height : ( defaults.height || 800 ) ),
-					min: 200,
-					max: 2000,
-					step: 10,
-					allowReset: true,
-					help: a.height ? __( 'Overriding for this block.', 'coywolf-pdf-viewer' ) : __( 'Inheriting the PDF / site default.', 'coywolf-pdf-viewer' ),
+				el( SelectControl, {
+					label: __( 'Height', 'coywolf-pdf-viewer' ),
+					value: a.heightMode || '',
+					options: [
+						{ label: __( 'Inherit', 'coywolf-pdf-viewer' ), value: '' },
+						{ label: __( 'Fit one page', 'coywolf-pdf-viewer' ), value: 'auto' },
+						{ label: __( 'Fixed height', 'coywolf-pdf-viewer' ), value: 'fixed' }
+					],
+					help: __( 'Fit one page sizes the viewer to the PDF page, so exactly one page shows at a time.', 'coywolf-pdf-viewer' ),
 					__nextHasNoMarginBottom: true,
 					onChange: function ( v ) {
-						setAttributes( { height: v || 0 } );
+						setAttributes( { heightMode: v } );
 					}
 				} ),
+				'fixed' === ( a.heightMode || ( pdf && pdf.options && pdf.options.height_mode ) || defaults.height_mode || 'auto' )
+					? el( RangeControl, {
+						label: __( 'Height (px)', 'coywolf-pdf-viewer' ),
+						value: a.height || ( pdf && pdf.options && pdf.options.height ? pdf.options.height : ( defaults.height || 800 ) ),
+						min: 200,
+						max: 2000,
+						step: 10,
+						allowReset: true,
+						help: a.height ? __( 'Overriding for this block.', 'coywolf-pdf-viewer' ) : __( 'Inheriting the PDF / site default.', 'coywolf-pdf-viewer' ),
+						__nextHasNoMarginBottom: true,
+						onChange: function ( v ) {
+							setAttributes( { height: v || 0 } );
+						}
+					} )
+					: null,
 				el( SelectControl, {
 					label: __( 'Color scheme', 'coywolf-pdf-viewer' ),
 					value: a.theme || '',

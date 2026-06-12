@@ -74,9 +74,14 @@ class Coywolf_CPV_Store {
 	public static function default_options() {
 		$options = array_fill_keys( self::OPTION_KEYS, '' );
 
-		$options['height'] = 0;
-		$options['theme']  = '';
-		$options['zoom']   = '';
+		$options['height_mode'] = '';
+		$options['height']      = 0;
+		$options['theme']       = '';
+		$options['zoom']        = '';
+		// Detected page aspect ratio (height/width), 0 = unknown. Internal;
+		// the front end uses it to size auto-height embeds before the viewer
+		// loads and corrects it.
+		$options['ratio'] = 0;
 		return $options;
 	}
 
@@ -122,6 +127,9 @@ class Coywolf_CPV_Store {
 	public function insert( $data ) {
 		global $wpdb;
 		$now = current_time( 'mysql' );
+
+		$data['options']          = is_array( isset( $data['options'] ) ? $data['options'] : null ) ? $data['options'] : array();
+		$data['options']['ratio'] = $this->detect_ratio( $data );
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$ok = $wpdb->insert(
 			self::table(),
@@ -171,8 +179,16 @@ class Coywolf_CPV_Store {
 			$fields['url'] = esc_url_raw( (string) $data['url'] );
 			$formats[]     = '%s';
 		}
+		// A source change invalidates the detected page ratio — re-detect.
+		if ( array_key_exists( 'source', $data ) || array_key_exists( 'attachment_id', $data ) || array_key_exists( 'url', $data ) ) {
+			$current         = isset( $current ) ? $current : $this->get( $id );
+			$merged_source   = array_merge( $current ? $current : array(), $data );
+			$data['options'] = array_key_exists( 'options', $data ) && is_array( $data['options'] ) ? $data['options'] : array();
+
+			$data['options']['ratio'] = $this->detect_ratio( $merged_source );
+		}
 		if ( array_key_exists( 'options', $data ) ) {
-			$current = $this->get( $id );
+			$current = isset( $current ) ? $current : $this->get( $id );
 
 			// Merge over the stored options so partial updates keep the rest.
 			$merged            = array_merge( $current ? $current['options'] : self::default_options(), (array) $data['options'] );
@@ -230,6 +246,93 @@ class Coywolf_CPV_Store {
 			$name = ( '' !== $name ? $name : 'document' ) . '.pdf';
 		}
 		return $name;
+	}
+
+	/**
+	 * Best-effort first-page aspect ratio (height/width) for auto-height
+	 * embeds. Tries the attachment's generated preview metadata, then the
+	 * /MediaBox in the file head (locally for Media Library PDFs, via a small
+	 * ranged request for external URLs). 0 = unknown; the front end falls
+	 * back to a Letter-page estimate and corrects itself once the viewer
+	 * loads the document.
+	 *
+	 * @param array $data name/source/attachment_id/url input.
+	 * @return float
+	 */
+	public function detect_ratio( $data ) {
+		$source = $this->clean_source( $data );
+
+		if ( 'media' === $source ) {
+			$attachment_id = isset( $data['attachment_id'] ) ? absint( $data['attachment_id'] ) : 0;
+			if ( $attachment_id < 1 ) {
+				return 0;
+			}
+
+			// Imagick-generated PDF previews record the rendered page size.
+			$meta = wp_get_attachment_metadata( $attachment_id );
+			if ( is_array( $meta ) && ! empty( $meta['sizes']['full']['width'] ) && ! empty( $meta['sizes']['full']['height'] ) ) {
+				return $this->ratio_from( (float) $meta['sizes']['full']['width'], (float) $meta['sizes']['full']['height'] );
+			}
+
+			$path = get_attached_file( $attachment_id );
+			if ( $path && is_readable( $path ) ) {
+				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- local read of a bounded chunk; WP_Filesystem cannot do partial reads.
+				$head = file_get_contents( $path, false, null, 0, 65536 );
+				return $this->ratio_from_mediabox( (string) $head );
+			}
+			return 0;
+		}
+
+		$url = isset( $data['url'] ) ? (string) $data['url'] : '';
+		if ( '' === $url || ! wp_http_validate_url( $url ) ) {
+			return 0;
+		}
+		$response = wp_remote_get(
+			$url,
+			array(
+				'timeout' => 5,
+				'headers' => array( 'Range' => 'bytes=0-65535' ),
+			)
+		);
+		if ( is_wp_error( $response ) ) {
+			return 0;
+		}
+		return $this->ratio_from_mediabox( substr( (string) wp_remote_retrieve_body( $response ), 0, 65536 ) );
+	}
+
+	/**
+	 * Parse the first /MediaBox from a chunk of raw PDF.
+	 *
+	 * @param string $head Leading bytes of the file.
+	 * @return float
+	 */
+	private function ratio_from_mediabox( $head ) {
+		if ( '' === $head || ! preg_match( '/\/MediaBox\s*\[\s*(-?[\d.]+)\s+(-?[\d.]+)\s+(-?[\d.]+)\s+(-?[\d.]+)\s*\]/', $head, $m ) ) {
+			return 0;
+		}
+		$width  = abs( (float) $m[3] - (float) $m[1] );
+		$height = abs( (float) $m[4] - (float) $m[2] );
+
+		// A nearby /Rotate 90|270 swaps the displayed orientation.
+		if ( preg_match( '/\/Rotate\s+(-?\d+)/', $head, $r ) && 0 !== ( ( (int) $r[1] / 90 ) % 2 ) ) {
+			list( $width, $height ) = array( $height, $width );
+		}
+		return $this->ratio_from( $width, $height );
+	}
+
+	/**
+	 * The height/width ratio, bounded to plausible page shapes.
+	 *
+	 * @param float $width  Page width.
+	 * @param float $height Page height.
+	 * @return float
+	 */
+	private function ratio_from( $width, $height ) {
+		if ( $width <= 0 || $height <= 0 ) {
+			return 0;
+		}
+		$ratio = $height / $width;
+		return ( $ratio > 0.05 && $ratio < 20 ) ? round( $ratio, 4 ) : 0;
 	}
 
 	/**
@@ -294,6 +397,9 @@ class Coywolf_CPV_Store {
 				$clean[ $key ] = $options[ $key ];
 			}
 		}
+		if ( isset( $options['height_mode'] ) && in_array( $options['height_mode'], array( 'auto', 'fixed' ), true ) ) {
+			$clean['height_mode'] = $options['height_mode'];
+		}
 		if ( isset( $options['height'] ) ) {
 			$clean['height'] = min( 3000, absint( $options['height'] ) );
 		}
@@ -302,6 +408,9 @@ class Coywolf_CPV_Store {
 		}
 		if ( isset( $options['zoom'] ) && in_array( $options['zoom'], array( 'fit-page', 'fit-width', 'automatic' ), true ) ) {
 			$clean['zoom'] = $options['zoom'];
+		}
+		if ( isset( $options['ratio'] ) && is_numeric( $options['ratio'] ) && (float) $options['ratio'] > 0.05 && (float) $options['ratio'] < 20 ) {
+			$clean['ratio'] = round( (float) $options['ratio'], 4 );
 		}
 		return $clean;
 	}
