@@ -4,7 +4,7 @@ Tags: pdf, pdf viewer, embed pdf, documents, pdf block
 Requires at least: 6.3
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.0.1
+Stable tag: 1.0.2
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -78,6 +78,9 @@ All modern browsers (Chrome, Edge, Firefox, Safari). The viewer uses WebAssembly
 This plugin phones no home. It bundles the MIT-licensed EmbedPDF viewer (https://github.com/embedpdf/embed-pdf-viewer), which uses Google's BSD-licensed PDFium engine compiled to WebAssembly, and serves it from your own site. If you embed a PDF from an external URL, your visitors' browsers request that file from the external host when the viewer loads.
 
 == Changelog ==
+
+= 1.0.2 =
+* Click to load: poster facade and shift-free placeholder sizing (#3).
 
 = 1.0.1 =
 * Viewer: auto-fit height to one PDF page (new default) (#2).
