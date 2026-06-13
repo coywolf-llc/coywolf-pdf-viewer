@@ -126,7 +126,7 @@ class Coywolf_PDF_Viewer {
 			}
 		}
 
-		update_option( 'coywolf_cpv_version', self::VERSION );
+		update_option( 'coywolf_cpv_version', self::VERSION, false );
 	}
 
 	/**
@@ -149,7 +149,7 @@ class Coywolf_PDF_Viewer {
 		$index = new Coywolf_CPV_Index( new Coywolf_CPV_Store() );
 		$index->rebuild();
 
-		update_option( 'coywolf_cpv_version', self::VERSION );
+		update_option( 'coywolf_cpv_version', self::VERSION, false );
 	}
 
 	/**

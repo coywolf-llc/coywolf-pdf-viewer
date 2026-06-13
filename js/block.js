@@ -258,7 +258,7 @@
 				triState( 'zoom_controls', __( 'Zoom controls', 'coywolf-pdf-viewer' ) ),
 				triState( 'click_to_load', __( 'Click to load', 'coywolf-pdf-viewer' ) )
 			),
-			error ? el( 'p', { className: 'coywolf-cpv-addform-error' }, error ) : null,
+			error ? el( 'p', { className: 'coywolf-cpv-addform-error', role: 'alert' }, error ) : null,
 			el(
 				'div',
 				{ className: 'coywolf-cpv-addform-actions' },

@@ -181,9 +181,9 @@ class Coywolf_CPV_Settings {
 
 		add_settings_section( 'coywolf_cpv_viewer', __( 'Viewer defaults', 'coywolf-pdf-viewer' ), array( $this, 'render_viewer_intro' ), self::PAGE );
 		add_settings_field( 'height', __( 'Height', 'coywolf-pdf-viewer' ), array( $this, 'render_height_field' ), self::PAGE, 'coywolf_cpv_viewer' );
-		add_settings_field( 'theme', __( 'Color scheme', 'coywolf-pdf-viewer' ), array( $this, 'render_theme_field' ), self::PAGE, 'coywolf_cpv_viewer' );
+		add_settings_field( 'theme', __( 'Color scheme', 'coywolf-pdf-viewer' ), array( $this, 'render_theme_field' ), self::PAGE, 'coywolf_cpv_viewer', array( 'label_for' => 'coywolf-cpv-theme' ) );
 		add_settings_field( 'accent_color', __( 'Accent color', 'coywolf-pdf-viewer' ), array( $this, 'render_accent_field' ), self::PAGE, 'coywolf_cpv_viewer' );
-		add_settings_field( 'zoom', __( 'Default zoom', 'coywolf-pdf-viewer' ), array( $this, 'render_zoom_field' ), self::PAGE, 'coywolf_cpv_viewer' );
+		add_settings_field( 'zoom', __( 'Default zoom', 'coywolf-pdf-viewer' ), array( $this, 'render_zoom_field' ), self::PAGE, 'coywolf_cpv_viewer', array( 'label_for' => 'coywolf-cpv-zoom' ) );
 
 		add_settings_section( 'coywolf_cpv_features', __( 'Toolbar features', 'coywolf-pdf-viewer' ), '__return_false', self::PAGE );
 		add_settings_field( 'features', __( 'Enabled features', 'coywolf-pdf-viewer' ), array( $this, 'render_features_field' ), self::PAGE, 'coywolf_cpv_features' );
@@ -271,12 +271,12 @@ class Coywolf_CPV_Settings {
 	public function render_height_field() {
 		$mode  = (string) $this->get( 'height_mode' );
 		$value = (int) $this->get( 'height' );
-		echo '<select name="' . esc_attr( self::OPTION ) . '[height_mode]">';
+		echo '<select aria-label="' . esc_attr__( 'Height mode', 'coywolf-pdf-viewer' ) . '" name="' . esc_attr( self::OPTION ) . '[height_mode]">';
 		printf( '<option value="auto"%s>%s</option>', selected( $mode, 'auto', false ), esc_html__( 'Fit one page (recommended)', 'coywolf-pdf-viewer' ) );
 		printf( '<option value="fixed"%s>%s</option>', selected( $mode, 'fixed', false ), esc_html__( 'Fixed height', 'coywolf-pdf-viewer' ) );
 		echo '</select> ';
 		printf(
-			'<input type="number" name="%s[height]" value="%d" min="200" max="3000" step="10" class="small-text" /> %s',
+			'<input type="number" aria-label="' . esc_attr__( 'Fixed height in pixels', 'coywolf-pdf-viewer' ) . '" name="%s[height]" value="%d" min="200" max="3000" step="10" class="small-text" /> %s',
 			esc_attr( self::OPTION ),
 			esc_attr( $value ),
 			esc_html__( 'pixels (used with fixed height)', 'coywolf-pdf-viewer' )
@@ -294,7 +294,7 @@ class Coywolf_CPV_Settings {
 			'light'  => __( 'Light', 'coywolf-pdf-viewer' ),
 			'dark'   => __( 'Dark', 'coywolf-pdf-viewer' ),
 		);
-		echo '<select name="' . esc_attr( self::OPTION ) . '[theme]">';
+		echo '<select id="coywolf-cpv-theme" name="' . esc_attr( self::OPTION ) . '[theme]">';
 		foreach ( $options as $key => $label ) {
 			printf( '<option value="%s"%s>%s</option>', esc_attr( $key ), selected( $value, $key, false ), esc_html( $label ) );
 		}
@@ -334,7 +334,7 @@ class Coywolf_CPV_Settings {
 			'fit-width' => __( 'Fit width', 'coywolf-pdf-viewer' ),
 			'automatic' => __( 'Automatic', 'coywolf-pdf-viewer' ),
 		);
-		echo '<select name="' . esc_attr( self::OPTION ) . '[zoom]">';
+		echo '<select id="coywolf-cpv-zoom" name="' . esc_attr( self::OPTION ) . '[zoom]">';
 		foreach ( $options as $key => $label ) {
 			printf( '<option value="%s"%s>%s</option>', esc_attr( $key ), selected( $value, $key, false ), esc_html( $label ) );
 		}
@@ -394,7 +394,7 @@ class Coywolf_CPV_Settings {
 	public function render_overlay_field() {
 		$this->color_input( 'overlay_color' );
 		printf(
-			' %1$s <input type="number" name="%2$s[overlay_opacity]" value="%3$d" min="0" max="95" step="5" class="small-text" />%%<p class="description">%4$s</p>',
+			' %1$s <input type="number" aria-label="' . esc_attr__( 'Overlay opacity percent', 'coywolf-pdf-viewer' ) . '" name="%2$s[overlay_opacity]" value="%3$d" min="0" max="95" step="5" class="small-text" />%%<p class="description">%4$s</p>',
 			esc_html__( 'at', 'coywolf-pdf-viewer' ),
 			esc_attr( self::OPTION ),
 			(int) $this->get( 'overlay_opacity' ),
@@ -430,11 +430,11 @@ class Coywolf_CPV_Settings {
 		$value = (float) $this->get( 'scroll_margin_top' );
 		$unit  = 'px' === $this->get( 'scroll_margin_unit' ) ? 'px' : 'rem';
 		printf(
-			'<input type="number" name="%1$s[scroll_margin_top]" value="%2$s" min="0" max="1000" step="0.25" class="small-text" /> ',
+			'<input type="number" aria-label="' . esc_attr__( 'Scroll margin top value', 'coywolf-pdf-viewer' ) . '" name="%1$s[scroll_margin_top]" value="%2$s" min="0" max="1000" step="0.25" class="small-text" /> ',
 			esc_attr( self::OPTION ),
 			esc_attr( $value > 0 ? rtrim( rtrim( number_format( $value, 3, '.', '' ), '0' ), '.' ) : '0' )
 		);
-		echo '<select name="' . esc_attr( self::OPTION ) . '[scroll_margin_unit]">';
+		echo '<select aria-label="' . esc_attr__( 'Scroll margin unit', 'coywolf-pdf-viewer' ) . '" name="' . esc_attr( self::OPTION ) . '[scroll_margin_unit]">';
 		printf( '<option value="rem"%s>rem</option>', selected( $unit, 'rem', false ) );
 		printf( '<option value="px"%s>px</option>', selected( $unit, 'px', false ) );
 		echo '</select>';

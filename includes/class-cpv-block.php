@@ -187,7 +187,21 @@ class Coywolf_CPV_Block {
 			$style = 'height:' . (string) $height . 'px';
 		}
 
-		$html  = '<figure ' . $wrapper . '>';
+		$has_caption = $show_caption && '' !== trim( $pdf['caption'] );
+		$fig_id      = wp_unique_id( 'coywolf-cpv-cap-' );
+		if ( $has_caption ) {
+			$fig_atts = ' role="group" aria-labelledby="' . esc_attr( $fig_id ) . '"';
+		} else {
+			$fig_atts = ' role="group" aria-label="' . esc_attr(
+				sprintf(
+					/* translators: %s: PDF document name */
+					__( 'PDF viewer: %s', 'coywolf-pdf-viewer' ),
+					$pdf['name']
+				)
+			) . '"';
+		}
+
+		$html  = '<figure ' . $wrapper . $fig_atts . '>';
 		$html .= '<div class="coywolf-cpv-embed" data-cpv="' . esc_attr( (string) wp_json_encode( $config ) ) . '" style="' . esc_attr( $style ) . '">';
 		$html .= '<div class="coywolf-cpv-placeholder' . ( '' !== $poster['url'] ? ' coywolf-cpv-has-poster' : '' ) . '">';
 		if ( '' !== $poster['url'] ) {
@@ -199,15 +213,15 @@ class Coywolf_CPV_Block {
 		if ( $click_to_load ) {
 			// Click-to-load shows only the name and the Load button; the
 			// direct link stays available for no-JavaScript visitors.
-			$html .= '<button type="button" class="coywolf-cpv-load">' . esc_html__( 'Load PDF', 'coywolf-pdf-viewer' ) . '</button>';
+			$html .= '<button type="button" class="coywolf-cpv-load" aria-label="' . esc_attr( sprintf( /* translators: %s: PDF document name */ __( 'Load PDF: %s', 'coywolf-pdf-viewer' ), $pdf['name'] ) ) . '">' . esc_html__( 'Load PDF', 'coywolf-pdf-viewer' ) . '</button>';
 			$html .= '<noscript><a class="coywolf-cpv-fallback" href="' . esc_url( $src ) . '">' . esc_html__( 'Open the PDF', 'coywolf-pdf-viewer' ) . '</a></noscript>';
 		} else {
 			$html .= '<a class="coywolf-cpv-fallback" href="' . esc_url( $src ) . '">' . esc_html__( 'Open the PDF', 'coywolf-pdf-viewer' ) . '</a>';
 		}
 		$html .= '</div>';
 		$html .= '</div>';
-		if ( $show_caption && '' !== trim( $pdf['caption'] ) ) {
-			$html .= '<figcaption class="coywolf-cpv-caption">' . wp_kses_post( $pdf['caption'] ) . '</figcaption>';
+		if ( $has_caption ) {
+			$html .= '<figcaption id="' . esc_attr( $fig_id ) . '" class="coywolf-cpv-caption">' . wp_kses_post( $pdf['caption'] ) . '</figcaption>';
 		}
 		$html .= '</figure>';
 

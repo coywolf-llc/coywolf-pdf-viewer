@@ -399,11 +399,11 @@ class Coywolf_CPV_Admin {
 		$overlay_opacity = isset( $values['options']['overlay_opacity'] ) ? $values['options']['overlay_opacity'] : '';
 		echo '<tr><td><label>' . esc_html__( 'Click-to-load overlay', 'coywolf-pdf-viewer' ) . '</label></td><td>';
 		printf(
-			'<span class="coywolf-cpv-color-field" data-key="overlay_color"><input type="hidden" class="coywolf-cpv-color-value" name="cpv_options[overlay_color]" value="%s" /><span class="coywolf-cpv-color-mount"></span></span> ',
+			'<span class="coywolf-cpv-color-field" data-key="overlay_color"><input type="hidden" class="coywolf-cpv-color-value" name="cpv_options[overlay_color]" value="%s" /><span class="coywolf-cpv-color-mount" role="group" aria-label="' . esc_attr__( 'Click-to-load overlay color', 'coywolf-pdf-viewer' ) . '"></span></span> ',
 			esc_attr( $overlay_color )
 		);
 		printf(
-			'<input type="number" name="cpv_options[overlay_opacity]" class="small-text" min="0" max="95" step="5" value="%1$s" placeholder="%2$d" />%% <span class="description">%3$s</span>',
+			'<input type="number" name="cpv_options[overlay_opacity]" aria-label="' . esc_attr__( 'Click-to-load overlay opacity (percent)', 'coywolf-pdf-viewer' ) . '" class="small-text" min="0" max="95" step="5" value="%1$s" placeholder="%2$d" />%% <span class="description">%3$s</span>',
 			esc_attr( '' !== $overlay_opacity ? (string) (int) $overlay_opacity : '' ),
 			(int) $this->settings->get( 'overlay_opacity' ),
 			esc_html__( 'Clear the color / empty opacity to use the Settings defaults.', 'coywolf-pdf-viewer' )
