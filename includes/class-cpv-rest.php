@@ -209,7 +209,9 @@ class Coywolf_CPV_REST {
 			return true;
 		}
 		$attachment_id = (int) $data['attachment_id'];
-		if ( $attachment_id < 1 || 'application/pdf' !== get_post_mime_type( $attachment_id ) ) {
+		if ( $attachment_id < 1
+			|| 'application/pdf' !== get_post_mime_type( $attachment_id )
+			|| ! current_user_can( 'edit_post', $attachment_id ) ) {
 			return new WP_Error( 'coywolf_cpv_bad_attachment', __( 'Choose a PDF from the Media Library.', 'coywolf-pdf-viewer' ), array( 'status' => 400 ) );
 		}
 		return true;

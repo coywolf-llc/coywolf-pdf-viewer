@@ -330,7 +330,7 @@ class Coywolf_CPV_Store {
 		if ( '' === $url || ! wp_http_validate_url( $url ) ) {
 			return 0;
 		}
-		$response = wp_remote_get(
+		$response = wp_safe_remote_get(
 			$url,
 			array(
 				'timeout' => 5,
