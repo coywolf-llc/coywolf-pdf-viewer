@@ -4,7 +4,7 @@
 
 Embed and view PDFs on posts and pages with a fast, fully self-hosted viewer. Manage your PDFs in one place, embed them with the Coywolf PDF block, and keep every byte served from your own site.
 
-- **Version:** 1.0.7
+- **Version:** 1.0.8
 - **Requires WordPress:** 6.3+
 - **Requires PHP:** 7.4+
 - **License:** GPL-2.0-or-later
@@ -85,6 +85,9 @@ This plugin updates itself from GitHub releases at [coywolf-llc/coywolf-pdf-view
 <!-- wporg-strip:end -->
 
 ## Changelog
+
+### 1.0.8
+- Updater: run GitHub release checks in the background so the Updates screen never hangs (#9).
 
 ### 1.0.7
 - Harden SSRF and REST capability, de-autoload version option, improve viewer accessibility (#8).
