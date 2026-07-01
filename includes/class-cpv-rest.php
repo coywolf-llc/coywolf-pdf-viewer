@@ -159,9 +159,22 @@ class Coywolf_CPV_REST {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function update_pdf( $request ) {
-		$id = (int) $request['id'];
-		if ( ! $this->store->get( $id ) ) {
+		$id  = (int) $request['id'];
+		$pdf = $this->store->get( $id );
+		if ( ! $pdf ) {
 			return new WP_Error( 'coywolf_cpv_not_found', __( 'PDF not found.', 'coywolf-pdf-viewer' ), array( 'status' => 404 ) );
+		}
+
+		// The write capability is upload_files-OR-manage, so scope edits per
+		// object: a manager may edit any PDF; otherwise a media-backed PDF may
+		// be edited only by someone who can edit that attachment, and a URL
+		// PDF (no attachment to own) requires the manage capability. Stops an
+		// upload_files author from altering another author's PDF.
+		if ( ! current_user_can( Coywolf_PDF_Viewer::CAPABILITY ) ) {
+			$attachment_id = ( 'media' === $pdf['source'] ) ? (int) $pdf['attachment_id'] : 0;
+			if ( ! $attachment_id || ! current_user_can( 'edit_post', $attachment_id ) ) {
+				return new WP_Error( 'coywolf_cpv_forbidden', __( 'You are not allowed to edit this PDF.', 'coywolf-pdf-viewer' ), array( 'status' => 403 ) );
+			}
 		}
 		$data = array();
 		foreach ( array( 'name', 'caption' ) as $key ) {

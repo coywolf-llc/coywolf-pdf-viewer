@@ -29,6 +29,13 @@ class Coywolf_PDF_Viewer {
 	const CAPABILITY = 'coywolf_cpv_manage';
 
 	/**
+	 * WP-Cron hook that drains the one-time page-ratio backfill in the
+	 * background, and the option recording that it has finished.
+	 */
+	const BACKFILL_HOOK        = 'coywolf_cpv_backfill_ratios';
+	const BACKFILL_DONE_OPTION = 'coywolf_cpv_ratios_backfilled';
+
+	/**
 	 * Singleton instance.
 	 *
 	 * @var Coywolf_PDF_Viewer|null
@@ -101,6 +108,7 @@ class Coywolf_PDF_Viewer {
 		$this->admin    = new Coywolf_CPV_Admin( $this->store, $this->index, $this->settings );
 
 		add_action( 'admin_init', array( $this, 'maybe_upgrade' ) );
+		add_action( self::BACKFILL_HOOK, array( $this, 'run_ratio_backfill' ) );
 	}
 
 	/**
@@ -113,7 +121,12 @@ class Coywolf_PDF_Viewer {
 		if ( self::VERSION === $stored ) {
 			return;
 		}
-		$this->store->backfill_ratios();
+		// Ratio backfill for pre-detection rows runs ONCE, in the background
+		// via WP-Cron — never synchronously here, since external PDFs each
+		// cost a blocking fetch and a large library could stall this request.
+		if ( ! get_option( self::BACKFILL_DONE_OPTION ) && ! wp_next_scheduled( self::BACKFILL_HOOK ) ) {
+			wp_schedule_single_event( time() + 30, self::BACKFILL_HOOK );
+		}
 
 		// 1.0.4: the click-to-load overlay default moved from 25% to 75%.
 		// Carry along installs still holding the old seeded default (a
@@ -127,6 +140,20 @@ class Coywolf_PDF_Viewer {
 		}
 
 		update_option( 'coywolf_cpv_version', self::VERSION, false );
+	}
+
+	/**
+	 * WP-Cron: drain one bounded batch of the page-ratio backfill, then either
+	 * reschedule (rows remain) or record completion so it never runs again.
+	 */
+	public function run_ratio_backfill() {
+		if ( $this->store->backfill_ratios() ) {
+			if ( ! wp_next_scheduled( self::BACKFILL_HOOK ) ) {
+				wp_schedule_single_event( time() + 60, self::BACKFILL_HOOK );
+			}
+			return;
+		}
+		update_option( self::BACKFILL_DONE_OPTION, 1, false );
 	}
 
 	/**

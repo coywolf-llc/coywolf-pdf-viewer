@@ -397,7 +397,7 @@ final class Coywolf_CPV_GitHub_Updater {
 		$info->download_link = $this->pick_package_url( $release );
 		$info->last_updated  = isset( $release['published_at'] ) ? $release['published_at'] : '';
 		$info->sections      = array(
-			'description' => 'Generate Chart.js charts from your data with Claude and embed them anywhere with a block.',
+			'description' => 'Embed and view PDF documents anywhere with a block, using a fast, accessible in-page viewer.',
 			'changelog'   => $this->render_changelog( $body ),
 		);
 		$info->icons         = $this->icon_urls();
