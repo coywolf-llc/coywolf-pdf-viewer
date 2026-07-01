@@ -298,7 +298,7 @@ class Coywolf_CPV_Block {
 			$schema['description'] = $caption;
 		}
 		return wp_get_inline_script_tag(
-			(string) wp_json_encode( $schema, JSON_UNESCAPED_SLASHES ),
+			(string) wp_json_encode( $schema, JSON_UNESCAPED_SLASHES | JSON_HEX_TAG ),
 			array( 'type' => 'application/ld+json' )
 		);
 	}

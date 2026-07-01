@@ -89,6 +89,10 @@ class Coywolf_CPV_Store {
 		// the front end uses it to size auto-height embeds before the viewer
 		// loads and corrects it.
 		$options['ratio'] = 0;
+		// Whether ratio detection has already been attempted for this row
+		// (1 = yes). Lets the one-time backfill skip rows whose ratio is
+		// genuinely undetectable instead of re-fetching them every pass.
+		$options['ratio_checked'] = 0;
 		// Poster image (attachment ID) for the click-to-load card. 0 = none;
 		// Media Library PDFs fall back to WordPress's generated first-page
 		// preview image.
@@ -470,6 +474,9 @@ class Coywolf_CPV_Store {
 		if ( isset( $options['ratio'] ) && is_numeric( $options['ratio'] ) && (float) $options['ratio'] > 0.05 && (float) $options['ratio'] < 20 ) {
 			$clean['ratio'] = round( (float) $options['ratio'], 4 );
 		}
+		if ( isset( $options['ratio_checked'] ) ) {
+			$clean['ratio_checked'] = $options['ratio_checked'] ? 1 : 0;
+		}
 		if ( isset( $options['poster_id'] ) ) {
 			$clean['poster_id'] = absint( $options['poster_id'] );
 		}
@@ -477,24 +484,39 @@ class Coywolf_CPV_Store {
 	}
 
 	/**
-	 * Backfill missing page ratios (rows created before ratio detection).
-	 * Bounded so an upgrade never stalls the admin.
+	 * Backfill missing page ratios for rows created before ratio detection.
 	 *
-	 * @param int $limit Max rows to process.
+	 * Runs from WP-Cron (never the admin request), one bounded batch at a
+	 * time: capped at $limit rows and $budget_seconds of wall-clock so a
+	 * library of slow external PDFs can't stall the tick. Every processed row
+	 * is marked ratio_checked so an undetectable one is attempted exactly once
+	 * and never re-fetched.
+	 *
+	 * @param int $limit          Max rows to process this batch.
+	 * @param int $budget_seconds Max wall-clock to spend this batch.
+	 * @return bool True if rows remain to process (caller should reschedule).
 	 */
-	public function backfill_ratios( $limit = 50 ) {
-		$done = 0;
+	public function backfill_ratios( $limit = 25, $budget_seconds = 15 ) {
+		$deadline  = time() + max( 1, (int) $budget_seconds );
+		$done      = 0;
+		$remaining = false;
 		foreach ( $this->all() as $pdf ) {
-			if ( ! empty( $pdf['options']['ratio'] ) ) {
+			// Already sized, or already attempted — nothing to do.
+			if ( ! empty( $pdf['options']['ratio'] ) || ! empty( $pdf['options']['ratio_checked'] ) ) {
 				continue;
 			}
-			$ratio = $this->detect_ratio( $pdf );
-			if ( $ratio > 0 ) {
-				$this->update( $pdf['id'], array( 'options' => array( 'ratio' => $ratio ) ) );
-			}
-			if ( ++$done >= $limit ) {
+			if ( $done >= $limit || time() >= $deadline ) {
+				$remaining = true; // Stopped early; finish on the next tick.
 				break;
 			}
+			$ratio  = $this->detect_ratio( $pdf );
+			$update = array( 'ratio_checked' => 1 );
+			if ( $ratio > 0 ) {
+				$update['ratio'] = $ratio;
+			}
+			$this->update( $pdf['id'], array( 'options' => $update ) );
+			++$done;
 		}
+		return $remaining;
 	}
 }
